@@ -269,47 +269,38 @@ input[type="number"] {
   text-decoration: none;
 }
 
-/* ================== Tabs ================== */
+/* ================== Tabs (inline pills in header) ================== */
 .tabs {
   display: flex;
-  gap: 0;
-  margin-top: 28px;
-  border-bottom: 1px solid var(--border);
-  position: relative;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 .tab {
   background: transparent;
   border: none;
-  padding: 12px 18px;
+  padding: 7px 14px;
   font: inherit;
   font-weight: 500;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
   cursor: pointer;
-  position: relative;
-  transition: color 0.15s ease;
-}
-.tab::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 0.18s ease;
+  border-radius: 5px;
+  white-space: nowrap;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 .tab:hover {
   color: var(--text);
 }
 .tab.is-active {
-  color: var(--accent);
+  color: var(--text);
+  background: var(--bg-3);
   font-weight: 600;
-}
-.tab.is-active::after {
-  transform: scaleX(1);
 }
 
 .panel {
