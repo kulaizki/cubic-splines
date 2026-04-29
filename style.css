@@ -538,52 +538,69 @@ input[type="number"] {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--bg);
+  overflow: hidden;
 }
 .points-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.9rem;
 }
 .points-table thead th {
   background: var(--bg-2);
   text-align: left;
-  padding: 8px 10px;
+  padding: 8px 8px;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--text-tertiary);
   border-bottom: 1px solid var(--border-strong);
 }
+.points-table thead th:first-child {
+  width: 30px;
+  padding-left: 12px;
+}
+.points-table thead th:last-child {
+  width: 32px;
+}
 .points-table td {
-  padding: 4px 6px;
+  padding: 0;
   border-bottom: 1px solid var(--border);
 }
 .points-table td:first-child {
-  padding-left: 12px;
+  padding: 0 4px 0 12px;
   color: var(--text-tertiary);
   width: 30px;
   font-family: var(--font-mono);
   font-size: 0.82rem;
+  text-align: left;
+}
+.points-table td:last-child {
+  width: 32px;
+  text-align: center;
+  padding: 0 4px;
 }
 .points-table tr:last-child td {
   border-bottom: none;
 }
-.points-table input {
+.points-table input[type="number"] {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid transparent;
+  display: block;
+  padding: 8px 6px;
+  border: none;
   background: transparent;
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 0.88rem;
-  border-radius: 4px;
+  font-size: 0.86rem;
+  border-radius: 0;
   color: var(--text);
+  text-overflow: ellipsis;
 }
-.points-table input:focus {
+.points-table input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent);
   background: var(--accent-soft);
+  color: var(--text);
 }
 .row-del {
   background: transparent;

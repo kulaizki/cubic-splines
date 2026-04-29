@@ -61,14 +61,18 @@ const DEFAULT_POINTS = [
   { x: 4, y: -0.6536436209 },
 ];
 
+const round6 = (v) => Number(v.toFixed(6));
 const PRESETS = {
-  runge: [-1, -0.5, 0, 0.5, 1].map((x) => ({ x, y: 1 / (1 + 25 * x * x) })),
-  sine: [0, 1, 2, 3, 4, 5, 6].map((x) => ({ x, y: Math.sin(x) })),
+  runge: [-1, -0.5, 0, 0.5, 1].map((x) => ({
+    x,
+    y: round6(1 / (1 + 25 * x * x)),
+  })),
+  sine: [0, 1, 2, 3, 4, 5, 6].map((x) => ({ x, y: round6(Math.sin(x)) })),
   textbook: [
     { x: 0, y: 1 },
-    { x: 1, y: Math.E },
-    { x: 2, y: Math.E ** 2 },
-    { x: 3, y: Math.E ** 3 },
+    { x: 1, y: round6(Math.E) },
+    { x: 2, y: round6(Math.E ** 2) },
+    { x: 3, y: round6(Math.E ** 3) },
   ],
   temperature: [
     { x: 0, y: 22 },
