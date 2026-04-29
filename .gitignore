@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Editor / agent state
+.claude/
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Course reference materials (not part of the source)
+FinalActivity_BorromeoGarciaSamson.R
+Rubrics for Final Activity.xlsx
