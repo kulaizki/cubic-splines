@@ -55,10 +55,10 @@ document.querySelectorAll(".subtab").forEach((btn) => {
 // ---------- Default & preset data ----------
 const DEFAULT_POINTS = [
   { x: 0, y: 1 },
-  { x: 1, y: 0.5403023058 },
-  { x: 2, y: -0.4161468365 },
-  { x: 3, y: -0.9899924966 },
-  { x: 4, y: -0.6536436209 },
+  { x: 1, y: 0.540302 },
+  { x: 2, y: -0.416147 },
+  { x: 3, y: -0.989992 },
+  { x: 4, y: -0.653644 },
 ];
 
 const round6 = (v) => Number(v.toFixed(6));
