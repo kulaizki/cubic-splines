@@ -1130,11 +1130,17 @@ mjx-container[display="true"] {
     flex: 0 0 auto;
     gap: 0;
     min-width: 0;
+    align-items: center;
   }
   .brand-mark {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
+  }
+  /* Match the tabs pill rounding for visual consistency */
+  .tabs {
+    height: 44px;
+    align-items: center;
   }
   .brand-text {
     display: none;
