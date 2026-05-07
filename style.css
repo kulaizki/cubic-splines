@@ -44,7 +44,8 @@ body {
   font-variant-ligatures: no-contextual;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* `clip` instead of `hidden` — `hidden` breaks position:sticky on descendants */
+  overflow-x: clip;
   max-width: 100vw;
 }
 img,
@@ -121,6 +122,12 @@ h3::before {
   background: var(--accent);
   border-radius: 1.5px;
   flex-shrink: 0;
+}
+/* No leading whitespace when an h3 is the first thing inside a card */
+.card > h3:first-child,
+.card > h2:first-child,
+.card > h4:first-child {
+  margin-top: 0;
 }
 h4 {
   font-size: 0.95rem;
@@ -207,9 +214,14 @@ input[type="number"] {
 
 /* ================== Header ================== */
 .site-header {
-  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(9, 9, 11, 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
   border-bottom: 1px solid var(--border);
-  padding: 24px 0;
+  padding: 18px 0;
 }
 .header-row {
   display: flex;
@@ -680,6 +692,64 @@ input[type="number"] {
   font-size: 0.85rem;
 }
 
+/* ================== Top action row (Compute + Play) ================== */
+.actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin: 4px 0 10px;
+}
+.actions-row #calc-btn {
+  flex: 1;
+  width: auto;
+}
+.actions-row .icon-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  width: 44px;
+  color: var(--accent);
+}
+.actions-row .icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+.actions-row .icon-btn:not(:disabled):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.actions-row .icon-btn svg {
+  display: block;
+}
+.actions-row .icon-btn.is-playing {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: play-pulse 1s ease-in-out infinite;
+}
+@keyframes play-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(129, 140, 248, 0);
+  }
+}
+.actions-hint {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.actions-hint strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* ================== Buttons ================== */
 .btn {
   display: inline-block;
@@ -1103,6 +1173,32 @@ mjx-container[display="true"] {
   .step-line,
   .piece-eq {
     font-size: 0.88rem;
+  }
+  /* Tighter top action row on mobile */
+  .actions-row {
+    gap: 6px;
+  }
+  .actions-row .icon-btn {
+    width: 40px;
+    padding: 0 10px;
+  }
+  .actions-hint {
+    font-size: 0.76rem;
+  }
+  /* Predict card: keep equations scrollable, slightly smaller */
+  .predict-eq {
+    font-size: 0.74rem;
+  }
+  .predict-result {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  /* Sidebar boundary: keep header readable when sticky */
+  .site-header {
+    padding: 14px 0;
+  }
+  .brand-text h1 {
+    font-size: 1rem;
   }
 }
 @media (max-width: 380px) {

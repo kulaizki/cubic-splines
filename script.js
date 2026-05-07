@@ -30,6 +30,7 @@ function switchTab(name) {
   document.querySelectorAll(".panel").forEach((p) => {
     p.classList.toggle("is-active", p.id === name);
   });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.querySelectorAll(".tab").forEach((btn) => {
@@ -481,19 +482,21 @@ function renderCoefTable(spline) {
   const { xs, a, b, c, d } = spline;
   const tbody = $("coef-tbody");
   tbody.innerHTML = "";
+  const m = (v) => `\\(${v}\\)`;
   for (let i = 0; i < a.length; i++) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${i}</td>
-      <td>${fmt(xs[i])}</td>
-      <td>${fmt(xs[i + 1])}</td>
-      <td>${fmt(a[i])}</td>
-      <td>${fmt(b[i])}</td>
-      <td>${fmt(c[i])}</td>
-      <td>${fmt(d[i])}</td>
+      <td>${m(i)}</td>
+      <td>${m(fmt(xs[i]))}</td>
+      <td>${m(fmt(xs[i + 1]))}</td>
+      <td>${m(fmt(a[i]))}</td>
+      <td>${m(fmt(b[i]))}</td>
+      <td>${m(fmt(c[i]))}</td>
+      <td>${m(fmt(d[i]))}</td>
     `;
     tbody.appendChild(tr);
   }
+  typeset([tbody]);
 }
 
 // ---------- Prediction card (shows which piece + substituted formula) ----------
@@ -623,12 +626,112 @@ function compute() {
   renderSteps(spline);
   renderCoefTable(spline);
   renderPieces(spline);
+  lastSpline = spline;
+  const playBtn = $("play-btn");
+  if (playBtn) playBtn.disabled = false;
 }
 
 $("calc-btn").addEventListener("click", compute);
 $("eval-x").addEventListener("input", () => {
   if (chart) compute();
 });
+
+// ---------- Hear Your Spline (Web Audio wavetable synth) ----------
+let lastSpline = null;
+let audioCtx = null;
+let activeSource = null;
+
+function playMelody() {
+  if (!lastSpline) return;
+  const playBtn = $("play-btn");
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    if (activeSource) {
+      try {
+        activeSource.onended = null;
+        activeSource.stop();
+      } catch (_) {}
+      activeSource = null;
+    }
+
+    // Build a smooth sine-ish wavetable so melody mode sounds clean (1 cycle)
+    const N = 1024;
+    const wavetable = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      // Mild harmonic mix — sine plus a touch of 2nd harmonic for warmth
+      const t = (i / N) * 2 * Math.PI;
+      wavetable[i] = 0.85 * Math.sin(t) + 0.15 * Math.sin(2 * t);
+    }
+    const buffer = audioCtx.createBuffer(1, N, audioCtx.sampleRate);
+    buffer.copyToChannel(wavetable, 0);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    // Sample the spline's y over its x range, normalize to [0, 1],
+    // map to ~2 octaves around the chosen base pitch.
+    const xs = lastSpline.xs;
+    const x0 = xs[0],
+      xn = xs[xs.length - 1];
+    const M = 200;
+    const ys = new Array(M);
+    let yMin = Infinity,
+      yMax = -Infinity;
+    for (let i = 0; i < M; i++) {
+      const x = x0 + ((xn - x0) * i) / (M - 1);
+      const y = evalSpline(lastSpline, x);
+      ys[i] = y;
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+    }
+    const yRange = yMax - yMin || 1;
+    // Pitch span: ~2 octaves centered on A3 (110Hz → 440Hz)
+    const minFreq = 110;
+    const maxFreq = 440;
+    const sampleRate = audioCtx.sampleRate;
+    const rates = new Float32Array(M);
+    for (let i = 0; i < M; i++) {
+      const norm = (ys[i] - yMin) / yRange; // 0..1
+      // Exponential mapping (musical perception is logarithmic in pitch)
+      const freq = minFreq * Math.pow(maxFreq / minFreq, norm);
+      rates[i] = (freq * N) / sampleRate;
+    }
+
+    const dur = 2.0;
+    const t0 = audioCtx.currentTime;
+    source.playbackRate.setValueAtTime(rates[0], t0);
+    source.playbackRate.setValueCurveAtTime(rates, t0, dur);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(0.22, t0 + 0.05);
+    gain.gain.setValueAtTime(0.22, t0 + dur - 0.15);
+    gain.gain.linearRampToValueAtTime(0, t0 + dur);
+
+    source.connect(gain).connect(audioCtx.destination);
+    source.start(t0);
+    source.stop(t0 + dur + 0.05);
+
+    if (playBtn) playBtn.classList.add("is-playing");
+    source.onended = () => {
+      if (activeSource === source) activeSource = null;
+      if (playBtn) playBtn.classList.remove("is-playing");
+    };
+    activeSource = source;
+  } catch (e) {
+    console.error("playMelody failed", e);
+    if (playBtn) playBtn.classList.remove("is-playing");
+    showError("Audio playback failed: " + e.message);
+  }
+}
+
+(function wirePlay() {
+  const btn = $("play-btn");
+  if (btn) btn.addEventListener("click", playMelody);
+})();
 
 // ---------- Init ----------
 renderPoints();

@@ -151,6 +151,18 @@ calc_panel <- tags$section(
   div(class = "calc-grid",
     tags$aside(class = "card inputs-card",
       tags$h3("Inputs"),
+      div(class = "actions-row",
+        tags$button(class = "btn btn-primary", id = "calc-btn",
+                    type = "button", "Compute Spline"),
+        tags$button(class = "btn btn-ghost icon-btn", id = "play-btn",
+                    type = "button", disabled = NA, `aria-label` = "Play melody",
+          HTML('<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
+        )
+      ),
+      tags$p(class = "actions-hint",
+        HTML("Click <strong>Play</strong> to hear the curve as a melody &mdash; height becomes pitch.")
+      ),
+      tags$p(class = "error-text", id = "error-text", role = "alert"),
       div(class = "field",
         tags$label(`for` = "boundary", "Boundary condition"),
         tags$select(id = "boundary",
@@ -200,8 +212,6 @@ calc_panel <- tags$section(
                    placeholder = "enter x, e.g. 1.5"),
         div(id = "predict-output", class = "predict-output", `aria-live` = "polite")
       ),
-      tags$button(class = "btn btn-primary btn-block", id = "calc-btn", type = "button", "Compute Spline"),
-      tags$p(class = "error-text", id = "error-text", role = "alert")
     ),
     div(class = "results",
       tags$nav(class = "subtabs", role = "tablist",
@@ -390,15 +400,16 @@ build_steps_html <- function(s) {
 
 build_coef_html <- function(s) {
   n <- length(s$a)
+  tex <- function(v) HTML(sprintf("\\(%s\\)", v))
   rows <- lapply(seq_len(n), function(i) {
     tags$tr(
-      tags$td(i - 1),
-      tags$td(fmt(s$xs[i])),
-      tags$td(fmt(s$xs[i + 1])),
-      tags$td(fmt(s$a[i])),
-      tags$td(fmt(s$b[i])),
-      tags$td(fmt(s$c[i])),
-      tags$td(fmt(s$d[i]))
+      tags$td(tex(i - 1)),
+      tags$td(tex(fmt(s$xs[i]))),
+      tags$td(tex(fmt(s$xs[i + 1]))),
+      tags$td(tex(fmt(s$a[i]))),
+      tags$td(tex(fmt(s$b[i]))),
+      tags$td(tex(fmt(s$c[i]))),
+      tags$td(tex(fmt(s$d[i])))
     )
   })
   tbl <- div(class = "table-scroll",

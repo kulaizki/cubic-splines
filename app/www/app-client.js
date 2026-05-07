@@ -60,6 +60,7 @@ function switchTab(name) {
   document.querySelectorAll(".panel").forEach((p) => {
     p.classList.toggle("is-active", p.id === name);
   });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function switchSubtab(name) {
@@ -235,6 +236,90 @@ function buildChart(spline, evalPoint) {
   }
 }
 
+// ---------- Hear Your Spline (Web Audio wavetable synth) ----------
+let lastCurve = null;
+let audioCtx = null;
+let activeSource = null;
+
+function playMelody() {
+  if (!lastCurve || lastCurve.length === 0) return;
+  const playBtn = $("play-btn");
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    if (activeSource) {
+      try {
+        activeSource.onended = null;
+        activeSource.stop();
+      } catch (_) {}
+      activeSource = null;
+    }
+
+    const N = 1024;
+    const wavetable = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const t = (i / N) * 2 * Math.PI;
+      wavetable[i] = 0.85 * Math.sin(t) + 0.15 * Math.sin(2 * t);
+    }
+    const buffer = audioCtx.createBuffer(1, N, audioCtx.sampleRate);
+    buffer.copyToChannel(wavetable, 0);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    const M = 200;
+    const ys = new Array(M);
+    let yMin = Infinity,
+      yMax = -Infinity;
+    const C = lastCurve.length;
+    for (let i = 0; i < M; i++) {
+      const idx = Math.min(C - 1, Math.floor((i / M) * C));
+      const y = lastCurve[idx].y;
+      ys[i] = y;
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+    }
+    const yRange = yMax - yMin || 1;
+    const minFreq = 110;
+    const maxFreq = 440;
+    const sampleRate = audioCtx.sampleRate;
+    const rates = new Float32Array(M);
+    for (let i = 0; i < M; i++) {
+      const norm = (ys[i] - yMin) / yRange;
+      const freq = minFreq * Math.pow(maxFreq / minFreq, norm);
+      rates[i] = (freq * N) / sampleRate;
+    }
+
+    const dur = 2.0;
+    const t0 = audioCtx.currentTime;
+    source.playbackRate.setValueAtTime(rates[0], t0);
+    source.playbackRate.setValueCurveAtTime(rates, t0, dur);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(0.22, t0 + 0.05);
+    gain.gain.setValueAtTime(0.22, t0 + dur - 0.15);
+    gain.gain.linearRampToValueAtTime(0, t0 + dur);
+
+    source.connect(gain).connect(audioCtx.destination);
+    source.start(t0);
+    source.stop(t0 + dur + 0.05);
+
+    if (playBtn) playBtn.classList.add("is-playing");
+    source.onended = () => {
+      if (activeSource === source) activeSource = null;
+      if (playBtn) playBtn.classList.remove("is-playing");
+    };
+    activeSource = source;
+  } catch (e) {
+    console.error("playMelody failed", e);
+    if (playBtn) playBtn.classList.remove("is-playing");
+    showError("Audio playback failed: " + e.message);
+  }
+}
+
 // ---------- Trigger compute via Shiny ----------
 function compute() {
   if (!window.Shiny || !window.Shiny.setInputValue) return;
@@ -306,6 +391,8 @@ function initControls() {
     evalX.addEventListener("input", () => {
       if (chart) compute();
     });
+  const playBtn = $("play-btn");
+  if (playBtn) playBtn.addEventListener("click", playMelody);
 }
 
 // ---------- Shiny message handlers ----------
@@ -319,6 +406,9 @@ function initShinyHandlers() {
     }
     showError("");
     buildChart(payload, payload.evalPoint);
+    lastCurve = payload.curve || null;
+    const playBtn = $("play-btn");
+    if (playBtn && lastCurve && lastCurve.length > 0) playBtn.disabled = false;
   });
 
   function setHtmlAndTypeset(elId, html) {
