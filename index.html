@@ -108,6 +108,26 @@
           </div>
         </div>
 
+        <h3>Conclusion</h3>
+        <p>
+          Cubic spline interpolation is a clean answer to a hard problem: how to draw a smooth curve through
+          data without the explosive oscillations that plague high-degree polynomials. By insisting on
+          <strong>low-degree pieces</strong> (cubic on each interval) joined under <strong>$C^2$ continuity</strong>,
+          the method trades a single global formula for a system that is both <em>visually faithful</em> and
+          <em>numerically stable</em> — and the tridiagonal solve makes it cheap enough to run in real time
+          on millions of points.
+        </p>
+        <p>
+          The wider implication is methodological. Many problems in numerical analysis — root-finding,
+          integration, ODE solving — share the same lesson: a globally-defined object often misbehaves,
+          while a <strong>piecewise-local construction with smoothness conditions</strong> stays well-conditioned.
+          Cubic splines made this idea concrete in interpolation; the same pattern reappears in finite-element
+          methods, signal processing kernels, and modern machine-learning techniques (e.g., natural cubic
+          splines as regression smoothers, monotone splines for calibration). Learning splines, then, isn't
+          just learning interpolation — it's a first encounter with one of the most productive ideas in
+          computational mathematics.
+        </p>
+
         <div class="cta-row">
           <button class="btn btn-primary" id="goto-calc-btn" type="button">Open the Calculator →</button>
         </div>
@@ -167,9 +187,9 @@
           </div>
 
           <div class="field">
-            <label for="eval-x">Evaluate spline at $x =$</label>
-            <input id="eval-x" type="number" step="any" placeholder="e.g. 1.5" />
-            <div class="eval-result" id="eval-result" aria-live="polite"></div>
+            <label for="eval-x">Predict $Y$ from $X$</label>
+            <input id="eval-x" type="number" step="any" placeholder="enter x, e.g. 1.5" />
+            <div id="predict-output" class="predict-output" aria-live="polite"></div>
           </div>
 
           <button class="btn btn-primary btn-block" id="calc-btn" type="button">Compute Spline</button>

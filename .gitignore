@@ -14,6 +14,16 @@ __pycache__/
 *.pyc
 .venv/
 
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# shinylive build output (regenerate via `Rscript -e "shinylive::export('app','dist')"`)
+# Keep committed when deploying to Vercel; uncomment to ignore locally.
+# dist/
+
 # Course reference materials (not part of the source)
 FinalActivity_BorromeoGarciaSamson.R
 Rubrics for Final Activity.xlsx

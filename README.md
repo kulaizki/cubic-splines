@@ -1,23 +1,21 @@
-# Cubic Spline Interpolation — Web App
+# Cubic Spline Interpolation — R Shiny App
 
-A pure HTML / CSS / JavaScript web application that computes and visualizes
-**natural** and **clamped cubic splines** through a user-supplied set of
-data points.
+An R Shiny application that computes and visualizes **natural** and
+**clamped cubic splines** through a user-supplied set of data points.
+Modeled after the example Shiny submission, but implementing the cubic
+spline algorithm from _Numerical Analysis_ (Burden & Faires, §3.5).
 
 ## Features
 
 - **Two boundary conditions** — natural ($S''=0$ at endpoints) and clamped ($S'$ specified at endpoints).
-- **Editable data table** — add, remove, and edit $(x_i, y_i)$ points; presets included (Runge, sine, textbook example, daily temperature).
-- **Live plot** — smooth spline curve overlaid with input points (Chart.js).
+- **Editable data points** — paste/edit `x, y` pairs in the textarea, or pick a preset (Runge, sine, textbook example, daily temperature).
+- **Live plot** — smooth spline curve overlaid with input points (base R graphics).
 - **Step-by-step solution** — interval widths $h_i$, RHS $\alpha_i$, the Thomas-algorithm sweep ($l_i, \mu_i, z_i$), and back-substitution for $a_i, b_i, c_i, d_i$.
-- **Coefficient table** — clean view of every $S_i(x)$ coefficient.
-- **Piecewise expression view** — the full piecewise definition of $S(x)$.
+- **Coefficient table** — `DT::datatable` view of every $S_i(x)$ coefficient.
+- **Piecewise expression view** — full piecewise definition of $S(x)$ via MathJax.
 - **Evaluate at arbitrary $x$** — value of $S(x)$ shown numerically and as a marker on the plot.
-- **Mobile responsive** — sidebar collapses, tabs scroll, plot resizes.
 
 ## Algorithm
-
-Implements the cubic-spline algorithm from _Numerical Analysis_ (Burden & Faires, §3.5):
 
 1. $h_i = x_{i+1} - x_i$
 2. $a_i = y_i$
@@ -29,51 +27,116 @@ Implements the cubic-spline algorithm from _Numerical Analysis_ (Burden & Faires
 
 ## Numerical verification
 
-The algorithm has been verified against **`scipy.interpolate.CubicSpline`**
-across 5 test cases (textbook natural, textbook clamped, sine, Runge,
-non-uniform spacing). Maximum coefficient error: **3.55 × 10⁻¹⁵**
-(machine epsilon — i.e. the algorithm is mathematically exact).
+Both the R and JavaScript implementations are verified against
+`scipy.interpolate.CubicSpline` (the SciPy reference) and against each
+other, across 5 test cases (textbook natural, textbook clamped, sine,
+Runge, non-uniform spacing).
 
-To re-run the verification:
+| Comparison  | Max coefficient error                              | Status      |
+| ----------- | -------------------------------------------------- | ----------- |
+| R vs scipy  | 3.55 × 10⁻¹⁵                                       | ✓ machine ε |
+| JS vs scipy | 3.55 × 10⁻¹⁵                                       | ✓ machine ε |
+| R vs JS     | bit-exact on most coeffs; max 1.11 × 10⁻¹⁶ on sine | ✓           |
+
+To re-run the verifications:
 
 ```bash
 cd _verify
-python3 verify.py    # requires numpy, scipy, and node
+python3 verify.py     # JS  vs scipy
+python3 verify_r.py   # R   vs scipy   (needs R + jsonlite)
 ```
 
-## Run locally
+## Run locally (RStudio)
 
-It's plain static HTML — open `index.html` in a browser, or:
+1. Open `app/app.R` in RStudio.
+2. Click **Run App** (or `shiny::runApp("app")` from the R console).
+
+Required packages:
+
+```r
+install.packages(c("shiny", "DT"))
+```
+
+## Deploy
+
+Shiny apps need an R runtime, but Vercel doesn't have one. We use
+**[shinylive](https://posit-dev.github.io/r-shinylive/)** to compile the
+app to a fully static bundle (Shiny + WebAssembly), which Vercel can
+serve directly.
+
+### One-time setup
+
+```r
+install.packages("shinylive")
+```
+
+### Build static bundle
+
+From the project root:
 
 ```bash
-python3 -m http.server 8000
-# visit http://localhost:8000
+Rscript -e "shinylive::export('app', 'dist')"
 ```
 
-## Deploy to Vercel
+This produces a `dist/` folder containing `index.html`,
+`shinylive-sw.js`, the WebAssembly runtime, and your app code. It is
+fully self-contained and offline-capable after first load.
 
-The project is 100% static, so Vercel auto-detects it.
+### Deploy to Vercel
+
+The `vercel.json` is already wired up — `outputDirectory` points at
+`dist/`, with COOP/COEP headers so shinylive's WebAssembly loader gets
+optimal performance.
+
+Two ways to deploy:
+
+**A. Via Vercel CLI** (re-deploy after each `dist/` rebuild)
 
 ```bash
 npm i -g vercel
-vercel
-# follow prompts; subsequent deploys: `vercel --prod`
+vercel --prod
 ```
 
-Or push to GitHub and import the repo on [vercel.com/new](https://vercel.com/new) — no build settings needed.
+**B. Via GitHub** (commit `dist/` to main)
+
+```bash
+Rscript -e "shinylive::export('app', 'dist')"
+git add dist
+git commit -m "build: regenerate shinylive bundle"
+git push
+```
+
+Vercel auto-deploys on push.
+
+> **Note on first load:** shinylive bootstraps webR (an R-in-WebAssembly
+> runtime) in the browser. Expect ~10–30s on first load while ~30 MB of
+> WASM is downloaded and cached. Subsequent loads are near-instant.
+
+### Alternative host: shinyapps.io
+
+If you'd rather run a real R server (no shinylive, instant first load):
+
+```r
+install.packages("rsconnect")
+rsconnect::setAccountInfo(name = "<your-account>", token = "...", secret = "...")
+rsconnect::deployApp("app")
+```
 
 ## File structure
 
 ```
 .
-├── index.html         # markup, MathJax + Chart.js CDNs
-├── style.css          # design tokens, responsive layout
-├── script.js          # spline algorithm + UI logic
-├── vercel.json        # (optional) clean URLs config
+├── app/
+│   └── app.R              # the Shiny app (UI + server)
+├── dist/                  # shinylive build output (deployed to Vercel)
+├── vercel.json            # outputDirectory + COOP/COEP headers
 ├── README.md
-└── _verify/           # numerical-correctness harness (not deployed)
-    ├── spline_algo.js
-    ├── run_js.js
-    └── verify.py
+├── _verify/               # numerical correctness harness for the JS port
+│   ├── spline_algo.js
+│   ├── run_js.js
+│   └── verify.py
+└── (legacy static port)   # original HTML/CSS/JS — not deployed
+    ├── index.html
+    ├── style.css
+    └── script.js
 ```
-

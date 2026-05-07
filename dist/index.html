@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shiny App</title>
+    <script
+      src="./shinylive/load-shinylive-sw.js"
+      type="module"
+    ></script>
+    <script type="module">
+      import { runExportedApp } from "./shinylive/shinylive.js";
+      runExportedApp({
+        id: "root",
+        appEngine: "r",
+        relPath: "",
+      });
+    </script>
+    <link rel="stylesheet" href="./shinylive/style-resets.css" />
+    <link rel="stylesheet" href="./shinylive/shinylive.css" />
+    
+  <meta name='color-scheme' content='dark'><style>:root{color-scheme:dark;}html,body{background:#09090b !important;margin:0;color:#fafafa;  color-scheme:dark;  font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}#root{background:#09090b !important;}::-webkit-scrollbar{width:8px;height:8px;}::-webkit-scrollbar-track{background:#09090b !important;}::-webkit-scrollbar-corner{background:#09090b !important;}::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:4px;border:2px solid #09090b;}::-webkit-scrollbar-thumb:hover{background:#71717a;}html{scrollbar-color:#3f3f46 #09090b;scrollbar-width:thin;}</style></head>
+  <body>
+    
+    <div style="height: 100vh; width: 100vw" id="root"></div>
+    
+  </body>
+</html>

@@ -496,6 +496,54 @@ function renderCoefTable(spline) {
   }
 }
 
+// ---------- Prediction card (shows which piece + substituted formula) ----------
+function renderPredict(spline, x, y) {
+  const out = $("predict-output");
+  if (!out) return;
+  if (spline === null || x === null || !Number.isFinite(x)) {
+    out.innerHTML = "";
+    return;
+  }
+  const xs = spline.xs;
+  if (y === null) {
+    out.innerHTML = `<div class="predict-card predict-out-of-range">x = ${fmt(x)} is outside [${fmt(xs[0])}, ${fmt(xs[xs.length - 1])}]</div>`;
+    return;
+  }
+  const a = spline.a,
+    b = spline.b,
+    c = spline.c,
+    d = spline.d;
+  let i = 0;
+  for (i = 0; i < a.length; i++) if (x <= xs[i + 1]) break;
+  if (i >= a.length) i = a.length - 1;
+  const sgn = (v) => (v >= 0 ? "+" : "-");
+  const xq = fmt(x, 4);
+  const xi = fmt(xs[i]);
+  const tex = String.raw`\[
+\begin{aligned}
+S_{${i}}(${xq}) ={}& ${fmt(a[i])} \\
+&${sgn(b[i])}\, ${fmt(Math.abs(b[i]))}\,(${xq} - ${xi}) \\
+&${sgn(c[i])}\, ${fmt(Math.abs(c[i]))}\,(${xq} - ${xi})^{2} \\
+&${sgn(d[i])}\, ${fmt(Math.abs(d[i]))}\,(${xq} - ${xi})^{3} \\
+={}& ${fmt(y, 6)}
+\end{aligned}
+\]`;
+  out.innerHTML = `
+    <div class="predict-card">
+      <div class="predict-meta">
+        Uses piece <span class="predict-piece">\\(S_{${i}}\\)</span>
+        on \\([${fmt(xs[i])},\\; ${fmt(xs[i + 1])}]\\)
+      </div>
+      <div class="predict-eq">${tex}</div>
+      <div class="predict-result">
+        <span class="predict-label">\\(S(${xq}) =\\)</span>
+        <span class="predict-value">${fmt(y, 6)}</span>
+      </div>
+    </div>
+  `;
+  typeset([out]);
+}
+
 // ---------- Piecewise expressions (LaTeX, multi-line aligned) ----------
 function renderPieces(spline) {
   const { xs, a, b, c, d } = spline;
@@ -562,14 +610,13 @@ function compute() {
     const xq = parseFloat(evalRaw);
     const yq = evalSpline(spline, xq);
     if (yq === null) {
-      $("eval-result").textContent =
-        `x = ${xq} is outside [${xs[0]}, ${xs[xs.length - 1]}]`;
+      renderPredict(spline, xq, null);
     } else {
-      $("eval-result").textContent = `S(${fmt(xq, 4)}) = ${fmt(yq, 6)}`;
       evalPoint = { x: xq, y: yq };
+      renderPredict(spline, xq, yq);
     }
   } else {
-    $("eval-result").textContent = "";
+    renderPredict(null, null, null);
   }
 
   buildChart(spline, evalPoint);
