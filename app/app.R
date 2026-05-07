@@ -256,6 +256,7 @@ ui <- tagList(
               content = "Cubic Spline Interpolation calculator with step-by-step solution, plot, and coefficient table."),
     tags$meta(name = "color-scheme", content = "dark"),
     tags$title("Cubic Spline Interpolation"),
+    tags$link(rel = "icon", type = "image/svg+xml", href = "favicon.svg"),
 
     tags$link(rel = "preconnect", href = "https://fonts.googleapis.com"),
     tags$link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = NA),

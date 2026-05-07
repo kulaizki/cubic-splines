@@ -1132,15 +1132,25 @@ mjx-container[display="true"] {
     min-width: 0;
     align-items: center;
   }
+  /* Pin both controls to identical pixel height for clean alignment */
   .brand-mark {
     width: 44px;
     height: 44px;
     flex-shrink: 0;
+    box-sizing: border-box;
   }
-  /* Match the tabs pill rounding for visual consistency */
   .tabs {
     height: 44px;
+    padding: 4px;
+    box-sizing: border-box;
+    align-items: stretch;
+  }
+  /* Tabs height was being broken by .tab's vertical padding; let flex stretch handle it instead */
+  .tab {
+    padding: 0 14px;
+    display: inline-flex;
     align-items: center;
+    line-height: 1;
   }
   .brand-text {
     display: none;

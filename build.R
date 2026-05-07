@@ -7,9 +7,20 @@ shinylive::export("app", "dist", quiet = TRUE)
 idx_path <- "dist/index.html"
 html <- readLines(idx_path, warn = FALSE)
 
-# Inject dark theme on the OUTER shinylive shell (html, body, #root, scrollbar)
+# Copy favicon to dist so the OUTER shinylive shell can reference it
+file.copy("favicon.svg", "dist/favicon.svg", overwrite = TRUE)
+
+# Update outer shell <title> (default is "Shiny App")
+html <- sub(
+  "<title>Shiny App</title>",
+  "<title>Cubic Spline Interpolation</title>",
+  html, fixed = TRUE
+)
+
+# Inject favicon + dark theme on the OUTER shinylive shell (html, body, #root, scrollbar)
 # so there are no white gaps when scrolling past the iframe.
 inject <- paste0(
+  "<link rel='icon' type='image/svg+xml' href='./favicon.svg'>",
   "<meta name='color-scheme' content='dark'>",
   "<style>",
   ":root{color-scheme:dark;}",
