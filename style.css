@@ -632,6 +632,15 @@ input[type="number"] {
   margin-top: 10px;
   min-height: 1em;
 }
+.predict-output:empty {
+  margin-top: 0;
+  min-height: 0;
+}
+/* Drop the trailing margin so the inputs card hugs its last element */
+.inputs-card > .field:last-child,
+.inputs-card > p:last-child {
+  margin-bottom: 0;
+}
 .predict-card {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -1108,12 +1117,19 @@ mjx-container[display="true"] {
     padding: 0 16px;
   }
   .site-header {
-    padding: 18px 0;
+    padding: 12px 0;
+  }
+  /* Compact one-row header: icon + tabs only. Hide title/subtitle and learn-more. */
+  .header-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
   }
   .brand {
-    gap: 12px;
+    flex: 0 0 auto;
+    gap: 0;
     min-width: 0;
-    flex: 1 1 auto;
   }
   .brand-mark {
     width: 36px;
@@ -1121,21 +1137,14 @@ mjx-container[display="true"] {
     flex-shrink: 0;
   }
   .brand-text {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-  .brand-text h1 {
-    font-size: 1.05rem;
-    line-height: 1.25;
-    word-break: break-word;
-  }
-  .brand-text p {
-    font-size: 0.8rem;
-    word-break: break-word;
+    display: none;
   }
   .github-link {
-    font-size: 0.8rem;
-    padding: 6px 10px;
+    display: none;
+  }
+  .tabs {
+    margin-top: 0;
+    flex-shrink: 0;
   }
   .card {
     padding: 18px;

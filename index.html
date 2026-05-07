@@ -140,19 +140,6 @@
         <aside class="card inputs-card">
           <h3>Inputs</h3>
 
-          <div class="actions-row">
-            <button class="btn btn-primary" id="calc-btn" type="button">Compute Spline</button>
-            <button class="btn btn-ghost icon-btn" id="play-btn" type="button" disabled aria-label="Play melody">
-              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                <path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-          <p class="actions-hint">
-            Click <strong>Play</strong> to hear the curve as a melody — height becomes pitch.
-          </p>
-          <p class="error-text" id="error-text" role="alert"></p>
-
           <div class="field">
             <label for="boundary">Boundary condition</label>
             <select id="boundary">
@@ -187,6 +174,19 @@
               <button class="btn btn-ghost btn-sm" id="reset-points-btn" type="button">Reset</button>
             </div>
           </div>
+
+          <div class="actions-row">
+            <button class="btn btn-primary" id="calc-btn" type="button">Compute Spline</button>
+            <button class="btn btn-ghost icon-btn" id="play-btn" type="button" disabled aria-label="Play melody">
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                <path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+          <p class="actions-hint">
+            Click <strong>Play</strong> to hear the curve as a melody — height becomes pitch.
+          </p>
+          <p class="error-text" id="error-text" role="alert"></p>
 
           <div class="field">
             <label for="preset">Quick presets</label>

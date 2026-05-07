@@ -151,18 +151,6 @@ calc_panel <- tags$section(
   div(class = "calc-grid",
     tags$aside(class = "card inputs-card",
       tags$h3("Inputs"),
-      div(class = "actions-row",
-        tags$button(class = "btn btn-primary", id = "calc-btn",
-                    type = "button", "Compute Spline"),
-        tags$button(class = "btn btn-ghost icon-btn", id = "play-btn",
-                    type = "button", disabled = NA, `aria-label` = "Play melody",
-          HTML('<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
-        )
-      ),
-      tags$p(class = "actions-hint",
-        HTML("Click <strong>Play</strong> to hear the curve as a melody &mdash; height becomes pitch.")
-      ),
-      tags$p(class = "error-text", id = "error-text", role = "alert"),
       div(class = "field",
         tags$label(`for` = "boundary", "Boundary condition"),
         tags$select(id = "boundary",
@@ -196,6 +184,18 @@ calc_panel <- tags$section(
           tags$button(class = "btn btn-ghost btn-sm", id = "reset-points-btn", type = "button", "Reset")
         )
       ),
+      div(class = "actions-row",
+        tags$button(class = "btn btn-primary", id = "calc-btn",
+                    type = "button", "Compute Spline"),
+        tags$button(class = "btn btn-ghost icon-btn", id = "play-btn",
+                    type = "button", disabled = NA, `aria-label` = "Play melody",
+          HTML('<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
+        )
+      ),
+      tags$p(class = "actions-hint",
+        HTML("Click <strong>Play</strong> to hear the curve as a melody &mdash; height becomes pitch.")
+      ),
+      tags$p(class = "error-text", id = "error-text", role = "alert"),
       div(class = "field",
         tags$label(`for` = "preset", "Quick presets"),
         tags$select(id = "preset",
