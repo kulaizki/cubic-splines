@@ -713,13 +713,78 @@ input[type="number"] {
   font-weight: 600;
 }
 
-/* ================== Floating Play button on the plot ================== */
-.plot-play-btn {
+/* ================== Plot overlays: info tooltip + playhead canvas ================== */
+#playhead-overlay {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.info-tooltip {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(24, 24, 27, 0.65);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: help;
+  outline: none;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.info-tooltip:hover,
+.info-tooltip:focus {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.info-glyph {
+  display: block;
+}
+.info-content {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  font-weight: 400;
+  cursor: default;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+.info-tooltip:hover .info-content,
+.info-tooltip:focus .info-content,
+.info-tooltip:focus-within .info-content {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* ================== Plot controls (Play button below the chart) ================== */
+.plot-controls {
+  display: flex;
+  justify-content: center;
+  padding: 14px 0 4px;
+}
+.plot-play-btn {
   width: 44px;
   height: 44px;
   padding: 0;
@@ -727,27 +792,24 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(24, 24, 27, 0.78);
+  background: var(--bg-2);
   border: 1px solid var(--border-strong);
   color: var(--accent);
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
     transform 0.1s ease;
 }
 .plot-play-btn:not(:disabled):hover {
-  background: rgba(39, 39, 42, 0.92);
+  background: var(--bg-3);
   border-color: var(--accent);
-  transform: translateX(-50%);
 }
 .plot-play-btn:not(:disabled):active {
-  transform: translateX(-50%) scale(0.95);
+  transform: scale(0.95);
 }
 .plot-play-btn:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
   color: var(--text-muted);
 }
@@ -769,9 +831,8 @@ input[type="number"] {
   animation: plot-play-pulse 1.4s ease-in-out infinite;
 }
 .plot-play-btn.is-playing:not(:disabled):hover {
-  background: rgba(39, 39, 42, 0.92);
   border-color: #f472b6;
-  transform: translateX(-50%);
+  background: var(--bg-3);
 }
 @keyframes plot-play-pulse {
   0%,

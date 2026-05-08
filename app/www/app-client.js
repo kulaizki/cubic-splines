@@ -166,33 +166,9 @@ function buildChart(spline, evalPoint) {
     });
   }
 
-  // Playhead: halo + bright dot where the line crosses the curve.
-  // The vertical line itself is drawn via Chart.js plugin (canvas overlay)
-  // so it doesn't affect the y-axis auto-scale.
-  const PLAYHEAD = "#f472b6";
-  datasets.push({
-    label: "__playhead_halo",
-    data: [],
-    type: "scatter",
-    backgroundColor: "rgba(244,114,182,0.25)",
-    borderColor: "transparent",
-    pointRadius: 14,
-    pointHoverRadius: 14,
-    showLine: false,
-    hidden: true,
-  });
-  datasets.push({
-    label: "__playhead_glow",
-    data: [],
-    type: "scatter",
-    backgroundColor: PLAYHEAD,
-    borderColor: "rgba(244,114,182,0.45)",
-    borderWidth: 4,
-    pointRadius: 4,
-    pointHoverRadius: 4,
-    showLine: false,
-    hidden: true,
-  });
+  // Playhead is drawn entirely on a separate overlay canvas (#playhead-overlay).
+  // No datasets are added for it, so Chart.js never refits the layout when
+  // playback starts/stops. Plot stays absolutely still during audio.
 
   const cfg = {
     data: { datasets },
@@ -201,12 +177,14 @@ function buildChart(spline, evalPoint) {
       maintainAspectRatio: false,
       animation: { duration: 350 },
       interaction: { mode: "nearest", intersect: false },
+      layout: { padding: { top: 8, bottom: 4 } },
       plugins: {
         legend: {
           position: "top",
+          align: "center",
           labels: {
             font: { family: "Manrope", size: 12 },
-            padding: 14,
+            padding: 22,
             usePointStyle: true,
             color: MUTED,
             filter: (item) => !String(item.text || "").startsWith("__"),
@@ -262,33 +240,9 @@ function buildChart(spline, evalPoint) {
     chart.update();
   } else {
     const canvas = $("spline-chart");
-    if (canvas) {
-      cfg.plugins = [playheadLinePlugin];
-      chart = new Chart(canvas, cfg);
-    }
+    if (canvas) chart = new Chart(canvas, cfg);
   }
 }
-
-// Chart.js plugin that draws the vertical playhead line via canvas
-const playheadLinePlugin = {
-  id: "playheadLine",
-  afterDatasetsDraw(c) {
-    if (playheadX === null) return;
-    const xPx = c.scales.x.getPixelForValue(playheadX);
-    const { top, bottom } = c.chartArea;
-    const ctx = c.ctx;
-    ctx.save();
-    ctx.beginPath();
-    ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = "#f472b6";
-    ctx.lineWidth = 1.5;
-    ctx.moveTo(xPx, top);
-    ctx.lineTo(xPx, bottom);
-    ctx.stroke();
-    ctx.restore();
-  },
-};
-let playheadX = null;
 
 // ---------- Hear Your Spline (Web Audio wavetable synth) ----------
 let lastCurve = null;
@@ -397,26 +351,74 @@ function evalCurveAt(curve, x) {
   return a.y + t * (b.y - a.y);
 }
 
-function findPlayheadDatasets() {
-  if (!chart) return null;
-  const out = { halo: null, glow: null };
-  for (const d of chart.data.datasets) {
-    if (d.label === "__playhead_halo") out.halo = d;
-    else if (d.label === "__playhead_glow") out.glow = d;
-  }
-  return out.halo && out.glow ? out : null;
+function syncOverlaySize() {
+  const main = $("spline-chart");
+  const overlay = $("playhead-overlay");
+  if (!main || !overlay) return null;
+  const w = main.width;
+  const h = main.height;
+  if (overlay.width !== w) overlay.width = w;
+  if (overlay.height !== h) overlay.height = h;
+  overlay.style.width = main.style.width || main.clientWidth + "px";
+  overlay.style.height = main.style.height || main.clientHeight + "px";
+  return overlay;
+}
+
+function clearOverlay() {
+  const overlay = $("playhead-overlay");
+  if (!overlay) return;
+  const ctx = overlay.getContext("2d");
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+}
+
+function drawPlayheadAt(x, y) {
+  if (!chart) return;
+  const overlay = syncOverlaySize();
+  if (!overlay) return;
+  const ctx = overlay.getContext("2d");
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  const dpr = window.devicePixelRatio || 1;
+  const xPx = chart.scales.x.getPixelForValue(x) * dpr;
+  const yPx = chart.scales.y.getPixelForValue(y) * dpr;
+  const top = chart.chartArea.top * dpr;
+  const bottom = chart.chartArea.bottom * dpr;
+
+  ctx.save();
+  // Vertical dashed line
+  ctx.beginPath();
+  ctx.setLineDash([5 * dpr, 4 * dpr]);
+  ctx.strokeStyle = "#f472b6";
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.moveTo(xPx, top);
+  ctx.lineTo(xPx, bottom);
+  ctx.stroke();
+
+  // Halo
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(xPx, yPx, 14 * dpr, 0, 2 * Math.PI);
+  ctx.fillStyle = "rgba(244,114,182,0.25)";
+  ctx.fill();
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(xPx, yPx, 6 * dpr, 0, 2 * Math.PI);
+  ctx.fillStyle = "rgba(244,114,182,0.45)";
+  ctx.fill();
+
+  // Inner bright dot
+  ctx.beginPath();
+  ctx.arc(xPx, yPx, 4 * dpr, 0, 2 * Math.PI);
+  ctx.fillStyle = "#f472b6";
+  ctx.fill();
+  ctx.restore();
 }
 
 function startPlayhead(curve, durSec) {
   if (!chart || !curve || curve.length === 0) return;
-  const sets = findPlayheadDatasets();
-  if (!sets) return;
-
   const x0 = curve[0].x;
   const xn = curve[curve.length - 1].x;
-
-  sets.halo.hidden = false;
-  sets.glow.hidden = false;
 
   const startMs = performance.now();
   if (playheadFrame) cancelAnimationFrame(playheadFrame);
@@ -430,10 +432,7 @@ function startPlayhead(curve, durSec) {
     const frac = t / durSec;
     const x = x0 + (xn - x0) * frac;
     const y = evalCurveAt(curve, x);
-    playheadX = x;
-    sets.halo.data = [{ x, y }];
-    sets.glow.data = [{ x, y }];
-    chart.update("none");
+    drawPlayheadAt(x, y);
     playheadFrame = requestAnimationFrame(tick);
   }
   playheadFrame = requestAnimationFrame(tick);
@@ -444,15 +443,7 @@ function stopPlayhead() {
     cancelAnimationFrame(playheadFrame);
     playheadFrame = null;
   }
-  playheadX = null;
-  if (!chart) return;
-  const sets = findPlayheadDatasets();
-  if (!sets) return;
-  sets.halo.data = [];
-  sets.glow.data = [];
-  sets.halo.hidden = true;
-  sets.glow.hidden = true;
-  chart.update("none");
+  clearOverlay();
 }
 
 function stopMelody() {

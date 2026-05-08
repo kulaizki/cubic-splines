@@ -222,14 +222,15 @@ calc_panel <- tags$section(
         div(class = "card",
           div(class = "chart-wrap",
             tags$canvas(id = "spline-chart"),
+            tags$canvas(id = "playhead-overlay", `aria-hidden` = "true"),
+            HTML('<span class="info-tooltip" tabindex="0" aria-label="What\'s shown here"><svg class="info-glyph" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="4.5" r="0.9" fill="currentColor"/><path d="M8 7v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span class="info-content" role="tooltip">The indigo curve is the cubic spline interpolant; white dots are the input data points. If you provided an evaluation \\(x\\), the green marker shows \\(S(x)\\) on the spline.</span></span>')
+          ),
+          div(class = "plot-controls",
             tags$button(class = "plot-play-btn", id = "play-btn",
                         type = "button", disabled = NA, `aria-label` = "Play melody",
               HTML('<svg class="play-glyph play-icon" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg><svg class="play-glyph stop-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" fill="currentColor"/></svg>')
             )
-          ),
-          tags$p(class = "caption", HTML(
-            "The indigo curve is the cubic spline interpolant; white dots are the input data points. If you provided an evaluation $x$, the green marker shows $S(x)$ on the spline."
-          ))
+          )
         )
       ),
       div(id = "steps", class = "subpanel", role = "tabpanel",
