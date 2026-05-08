@@ -9,9 +9,9 @@ maps the curve's height to pitch over time.
 
 ## Run it
 
-Three options, pick whichever you have. All three give the same UI.
+Two options, same UI.
 
-### A. Single-file R Shiny (simplest)
+### A. Single-file R Shiny (simplest, for submission)
 
 Needs R + `shiny` only.
 
@@ -30,11 +30,14 @@ Rscript -e 'install.packages(c("shiny","DT"), repos="https://cloud.r-project.org
 Rscript -e 'shiny::runApp("app", launch.browser=TRUE)'
 ```
 
-### C. Static (no R needed)
+### C. No R install — open the deployed bundle
 
 ```bash
-python3 -m http.server 8000      # then open http://localhost:8000
+cd dist && python3 -m http.server 8000      # http://localhost:8000
 ```
+
+R runs entirely in the browser via WebAssembly (shinylive). First load
+~10–30s; cached after.
 
 ## Algorithm
 
@@ -89,6 +92,6 @@ browser. First load downloads ~30 MB of WASM and is cached.
 │   └── www/                                        # vendored CSS / JS / Chart.js / MathJax
 ├── dist/                                           # shinylive output (Vercel)
 ├── _verify/                                        # numerical correctness harness
-├── index.html, style.css, script.js, vendor/       # static-only port (mirrors UI)
+├── style.css, favicon.svg                          # source assets shared by app/www and the build scripts
 └── vercel.json
 ```
