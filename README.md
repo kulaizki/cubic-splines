@@ -31,13 +31,18 @@ install.packages("shiny")
 
 ### A. Single-file R Shiny (simplest, for submission)
 
-Easiest path:
+Once R is installed, three equivalent ways to run:
 
-1. Open `FinalActivity_deJesusLimPumarManaliliSingh.R` in **RStudio**
-2. Click **Run App** (top-right of the editor toolbar)
-3. Browser opens to the running app
+**1. One-command script** (auto-installs `shiny` and launches the app):
 
-Or from a terminal:
+```bash
+./run.sh          # macOS / Linux
+run.bat           # Windows (or just double-click)
+```
+
+**2. RStudio:** open `FinalActivity_deJesusLimPumarManaliliSingh.R` → click **Run App**.
+
+**3. Terminal:**
 
 ```bash
 Rscript -e 'shiny::runApp("FinalActivity_deJesusLimPumarManaliliSingh.R", launch.browser=TRUE)'
