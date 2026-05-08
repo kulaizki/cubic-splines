@@ -11,17 +11,39 @@ maps the curve's height to pitch over time.
 
 Two options, same UI.
 
+### Prerequisites — install R (one-time)
+
+**macOS** — easiest is RStudio Desktop, which bundles both R and the IDE:
+
+1. Install R: download from <https://cran.r-project.org/bin/macosx/> (or `brew install --cask r`)
+2. Install RStudio: <https://posit.co/download/rstudio-desktop/>
+
+**Windows:**
+
+1. Install R: download from <https://cran.r-project.org/bin/windows/base/> and run the `.exe`
+2. Install RStudio: <https://posit.co/download/rstudio-desktop/>
+
+Then install the `shiny` package (one-time, in any R/RStudio console):
+
+```r
+install.packages("shiny")
+```
+
 ### A. Single-file R Shiny (simplest, for submission)
 
-Needs R + `shiny` only.
+Easiest path:
+
+1. Open `FinalActivity_deJesusLimPumarManaliliSingh.R` in **RStudio**
+2. Click **Run App** (top-right of the editor toolbar)
+3. Browser opens to the running app
+
+Or from a terminal:
 
 ```bash
-Rscript -e 'install.packages("shiny", repos="https://cloud.r-project.org")'
 Rscript -e 'shiny::runApp("FinalActivity_deJesusLimPumarManaliliSingh.R", launch.browser=TRUE)'
 ```
 
-Or open the `.R` file in RStudio and click **Run App**. Loads Chart.js and
-MathJax from CDN (needs internet on first run; cached after).
+Loads Chart.js and MathJax from CDN (needs internet on first run; cached after).
 
 ### B. Multi-file R Shiny (offline, fully vendored)
 
