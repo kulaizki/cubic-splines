@@ -1,142 +1,94 @@
-# Cubic Spline Interpolation (R Shiny App)
+# Cubic Spline Interpolation
 
-An R Shiny application that computes and visualizes **natural** and
-**clamped cubic splines** through a user-supplied set of data points.
-Modeled after the example Shiny submission, but implementing the cubic
-spline algorithm from _Numerical Analysis_ (Burden & Faires, §3.5).
+R Shiny calculator for **natural** and **clamped** cubic splines, implementing
+Burden & Faires §3.5. Editable points, live plot, step-by-step LaTeX solution,
+piecewise expressions, predict-Y, and a "Hear Your Spline" audio playback that
+maps the curve's height to pitch over time.
 
-## Features
+[Live demo](https://cubic-splines.vercel.app)
 
-- **Two boundary conditions:** natural ($S''=0$ at endpoints) and clamped ($S'$ specified at endpoints).
-- **Editable data points.** Paste or edit `x, y` pairs in the textarea, or pick a preset (Runge, sine, textbook example, daily temperature).
-- **Live plot.** Smooth spline curve overlaid with input points (base R graphics).
-- **Step-by-step solution.** Interval widths $h_i$, RHS $\alpha_i$, the Thomas-algorithm sweep ($l_i, \mu_i, z_i$), and back-substitution for $a_i, b_i, c_i, d_i$.
-- **Coefficient table.** `DT::datatable` view of every $S_i(x)$ coefficient.
-- **Piecewise expression view.** Full piecewise definition of $S(x)$ via MathJax.
-- **Evaluate at arbitrary $x$.** Value of $S(x)$ shown numerically and as a marker on the plot.
+## Run it
+
+Three options, pick whichever you have. All three give the same UI.
+
+### A. Single-file R Shiny (simplest)
+
+Needs R + `shiny` only.
+
+```bash
+Rscript -e 'install.packages("shiny", repos="https://cloud.r-project.org")'
+Rscript -e 'shiny::runApp("FinalActivity_deJesusLimPumarManaliliSingh.R", launch.browser=TRUE)'
+```
+
+Or open the `.R` file in RStudio and click **Run App**. Loads Chart.js and
+MathJax from CDN (needs internet on first run; cached after).
+
+### B. Multi-file R Shiny (offline, fully vendored)
+
+```bash
+Rscript -e 'install.packages(c("shiny","DT"), repos="https://cloud.r-project.org")'
+Rscript -e 'shiny::runApp("app", launch.browser=TRUE)'
+```
+
+### C. Static (no R needed)
+
+```bash
+python3 -m http.server 8000      # then open http://localhost:8000
+```
 
 ## Algorithm
 
 1. $h_i = x_{i+1} - x_i$
 2. $a_i = y_i$
 3. $\alpha_i = \tfrac{3}{h_i}(y_{i+1}-y_i) - \tfrac{3}{h_{i-1}}(y_i - y_{i-1})$
-4. Forward sweep (Thomas algorithm) for $l_i, \mu_i, z_i$
-5. Back substitution: $c_i = z_i - \mu_i c_{i+1}$
-6. $b_i = \tfrac{y_{i+1}-y_i}{h_i} - \tfrac{h_i (c_{i+1} + 2 c_i)}{3}$
-7. $d_i = \tfrac{c_{i+1} - c_i}{3 h_i}$
+4. Forward sweep (Thomas) for $l_i, \mu_i, z_i$
+5. Back-substitute: $c_i = z_i - \mu_i c_{i+1}$
+6. $b_i = \tfrac{y_{i+1}-y_i}{h_i} - \tfrac{h_i(c_{i+1}+2c_i)}{3}$, $\;\;d_i = \tfrac{c_{i+1}-c_i}{3 h_i}$
 
-## Numerical verification
+## Verification
 
-Both the R and JavaScript implementations are verified against
-`scipy.interpolate.CubicSpline` (the SciPy reference) and against each
-other, across 5 test cases (textbook natural, textbook clamped, sine,
-Runge, non-uniform spacing).
+Both R and JS implementations are checked against `scipy.interpolate.CubicSpline`
+across 5 test cases (textbook natural, textbook clamped, sine, Runge, non-uniform).
 
-| Comparison  | Max coefficient error                              | Status      |
-| ----------- | -------------------------------------------------- | ----------- |
-| R vs scipy  | 3.55 × 10⁻¹⁵                                       | ✓ machine ε |
-| JS vs scipy | 3.55 × 10⁻¹⁵                                       | ✓ machine ε |
-| R vs JS     | bit-exact on most coeffs; max 1.11 × 10⁻¹⁶ on sine | ✓           |
-
-To re-run the verifications:
+| Comparison  | Max coefficient error | Status    |
+| ----------- | --------------------- | --------- |
+| R vs scipy  | 3.55 × 10⁻¹⁵          | machine ε |
+| JS vs scipy | 3.55 × 10⁻¹⁵          | machine ε |
+| R vs JS     | 1.11 × 10⁻¹⁶ on sine  | bit-exact |
 
 ```bash
-cd _verify
-python3 verify.py     # JS  vs scipy
-python3 verify_r.py   # R   vs scipy   (needs R + jsonlite)
+cd _verify && python3 verify.py && python3 verify_r.py
 ```
 
-## Run locally (RStudio)
+## Build / deploy
 
-1. Open `app/app.R` in RStudio.
-2. Click **Run App** (or `shiny::runApp("app")` from the R console).
-
-Required packages:
-
-```r
-install.packages(c("shiny", "DT"))
-```
-
-## Deploy
-
-Shiny apps need an R runtime, but Vercel doesn't have one. We use
-**[shinylive](https://posit-dev.github.io/r-shinylive/)** to compile the
-app to a fully static bundle (Shiny + WebAssembly), which Vercel can
-serve directly.
-
-### One-time setup
-
-```r
-install.packages("shinylive")
-```
-
-### Build static bundle
-
-From the project root:
+Single-file R is regenerated from `app/` + `style.css` + `app/www/app-client.js`:
 
 ```bash
-Rscript -e "shinylive::export('app', 'dist')"
+Rscript build_singlefile.R
 ```
 
-This produces a `dist/` folder containing `index.html`,
-`shinylive-sw.js`, the WebAssembly runtime, and your app code. It is
-fully self-contained and offline-capable after first load.
-
-### Deploy to Vercel
-
-The `vercel.json` is already wired up; `outputDirectory` points at
-`dist/`, with COOP/COEP headers so shinylive's WebAssembly loader gets
-optimal performance.
-
-Two ways to deploy:
-
-**A. Via Vercel CLI** (re-deploy after each `dist/` rebuild)
+Vercel build (shinylive WebAssembly bundle):
 
 ```bash
-npm i -g vercel
-vercel --prod
+Rscript build.R              # produces dist/
 ```
 
-**B. Via GitHub** (commit `dist/` to main)
+`vercel.json` deploys `dist/` as static files; webR runs the R code in the
+browser. First load downloads ~30 MB of WASM and is cached.
 
-```bash
-Rscript -e "shinylive::export('app', 'dist')"
-git add dist
-git commit -m "build: regenerate shinylive bundle"
-git push
-```
-
-Vercel auto-deploys on push.
-
-> **Note on first load:** shinylive bootstraps webR (an R-in-WebAssembly
-> runtime) in the browser. Expect ~10–30s on first load while ~30 MB of
-> WASM is downloaded and cached. Subsequent loads are near-instant.
-
-### Alternative host: shinyapps.io
-
-If you'd rather run a real R server (no shinylive, instant first load):
-
-```r
-install.packages("rsconnect")
-rsconnect::setAccountInfo(name = "<your-account>", token = "...", secret = "...")
-rsconnect::deployApp("app")
-```
-
-## File structure
+## Layout
 
 ```
 .
+├── FinalActivity_deJesusLimPumarManaliliSingh.R   # single-file submission
+├── build_singlefile.R                              # rebuilds the single-file
+├── build.R                                         # rebuilds dist/ (shinylive)
 ├── app/
-│   └── app.R              # the Shiny app (UI + server)
-├── dist/                  # shinylive build output (deployed to Vercel)
-├── vercel.json            # outputDirectory + COOP/COEP headers
-├── README.md
-├── _verify/               # numerical correctness harness for the JS port
-│   ├── spline_algo.js
-│   ├── run_js.js
-│   └── verify.py
-└── (legacy static port)   # original HTML/CSS/JS, not deployed
-    ├── index.html
-    ├── style.css
-    └── script.js
+│   ├── app.R                                       # Shiny UI + server
+│   └── www/                                        # vendored CSS / JS / Chart.js / MathJax
+├── dist/                                           # shinylive output (Vercel)
+├── _verify/                                        # numerical correctness harness
+├── index.html, style.css, script.js, vendor/       # static-only port (mirrors UI)
+└── vercel.json
 ```
