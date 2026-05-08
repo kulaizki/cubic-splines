@@ -716,8 +716,9 @@ input[type="number"] {
 /* ================== Floating Play button on the plot ================== */
 .plot-play-btn {
   position: absolute;
-  bottom: 14px;
-  right: 14px;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 5;
   width: 44px;
   height: 44px;
@@ -740,9 +741,10 @@ input[type="number"] {
 .plot-play-btn:not(:disabled):hover {
   background: rgba(39, 39, 42, 0.92);
   border-color: var(--accent);
+  transform: translateX(-50%);
 }
 .plot-play-btn:not(:disabled):active {
-  transform: scale(0.95);
+  transform: translateX(-50%) scale(0.95);
 }
 .plot-play-btn:disabled {
   opacity: 0.35;
@@ -752,10 +754,24 @@ input[type="number"] {
 .plot-play-btn .play-glyph {
   display: block;
 }
+.plot-play-btn .stop-icon {
+  display: none;
+}
+.plot-play-btn.is-playing .play-icon {
+  display: none;
+}
+.plot-play-btn.is-playing .stop-icon {
+  display: block;
+}
 .plot-play-btn.is-playing {
   border-color: #f472b6;
   color: #f472b6;
   animation: plot-play-pulse 1.4s ease-in-out infinite;
+}
+.plot-play-btn.is-playing:not(:disabled):hover {
+  background: rgba(39, 39, 42, 0.92);
+  border-color: #f472b6;
+  transform: translateX(-50%);
 }
 @keyframes plot-play-pulse {
   0%,

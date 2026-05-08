@@ -224,7 +224,7 @@ calc_panel <- tags$section(
             tags$canvas(id = "spline-chart"),
             tags$button(class = "plot-play-btn", id = "play-btn",
                         type = "button", disabled = NA, `aria-label` = "Play melody",
-              HTML('<svg class="play-glyph" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
+              HTML('<svg class="play-glyph play-icon" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg><svg class="play-glyph stop-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" fill="currentColor"/></svg>')
             )
           ),
           tags$p(class = "caption", HTML(

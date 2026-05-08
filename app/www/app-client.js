@@ -166,22 +166,10 @@ function buildChart(spline, evalPoint) {
     });
   }
 
-  // Playhead datasets: vertical line + soft halo where it crosses the curve.
+  // Playhead: halo + bright dot where the line crosses the curve.
+  // The vertical line itself is drawn via Chart.js plugin (canvas overlay)
+  // so it doesn't affect the y-axis auto-scale.
   const PLAYHEAD = "#f472b6";
-  datasets.push({
-    label: "__playhead_line",
-    data: [],
-    type: "line",
-    borderColor: PLAYHEAD,
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderDash: [5, 4],
-    pointRadius: 0,
-    showLine: true,
-    fill: false,
-    tension: 0,
-    hidden: true,
-  });
   datasets.push({
     label: "__playhead_halo",
     data: [],
@@ -274,9 +262,33 @@ function buildChart(spline, evalPoint) {
     chart.update();
   } else {
     const canvas = $("spline-chart");
-    if (canvas) chart = new Chart(canvas, cfg);
+    if (canvas) {
+      cfg.plugins = [playheadLinePlugin];
+      chart = new Chart(canvas, cfg);
+    }
   }
 }
+
+// Chart.js plugin that draws the vertical playhead line via canvas
+const playheadLinePlugin = {
+  id: "playheadLine",
+  afterDatasetsDraw(c) {
+    if (playheadX === null) return;
+    const xPx = c.scales.x.getPixelForValue(playheadX);
+    const { top, bottom } = c.chartArea;
+    const ctx = c.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = "#f472b6";
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(xPx, top);
+    ctx.lineTo(xPx, bottom);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+let playheadX = null;
 
 // ---------- Hear Your Spline (Web Audio wavetable synth) ----------
 let lastCurve = null;
@@ -387,14 +399,12 @@ function evalCurveAt(curve, x) {
 
 function findPlayheadDatasets() {
   if (!chart) return null;
-  const ds = chart.data.datasets;
-  const out = { line: null, halo: null, glow: null };
-  for (const d of ds) {
-    if (d.label === "__playhead_line") out.line = d;
-    else if (d.label === "__playhead_halo") out.halo = d;
+  const out = { halo: null, glow: null };
+  for (const d of chart.data.datasets) {
+    if (d.label === "__playhead_halo") out.halo = d;
     else if (d.label === "__playhead_glow") out.glow = d;
   }
-  return out.line && out.halo && out.glow ? out : null;
+  return out.halo && out.glow ? out : null;
 }
 
 function startPlayhead(curve, durSec) {
@@ -404,17 +414,7 @@ function startPlayhead(curve, durSec) {
 
   const x0 = curve[0].x;
   const xn = curve[curve.length - 1].x;
-  let yMin = Infinity,
-    yMax = -Infinity;
-  for (const p of curve) {
-    if (p.y < yMin) yMin = p.y;
-    if (p.y > yMax) yMax = p.y;
-  }
-  const yPad = (yMax - yMin) * 0.08 || 0.5;
-  const yLo = yMin - yPad;
-  const yHi = yMax + yPad;
 
-  sets.line.hidden = false;
   sets.halo.hidden = false;
   sets.glow.hidden = false;
 
@@ -430,10 +430,7 @@ function startPlayhead(curve, durSec) {
     const frac = t / durSec;
     const x = x0 + (xn - x0) * frac;
     const y = evalCurveAt(curve, x);
-    sets.line.data = [
-      { x, y: yLo },
-      { x, y: yHi },
-    ];
+    playheadX = x;
     sets.halo.data = [{ x, y }];
     sets.glow.data = [{ x, y }];
     chart.update("none");
@@ -447,16 +444,28 @@ function stopPlayhead() {
     cancelAnimationFrame(playheadFrame);
     playheadFrame = null;
   }
+  playheadX = null;
   if (!chart) return;
   const sets = findPlayheadDatasets();
   if (!sets) return;
-  sets.line.data = [];
   sets.halo.data = [];
   sets.glow.data = [];
-  sets.line.hidden = true;
   sets.halo.hidden = true;
   sets.glow.hidden = true;
   chart.update("none");
+}
+
+function stopMelody() {
+  if (activeSource) {
+    try {
+      activeSource.onended = null;
+      activeSource.stop();
+    } catch (_) {}
+    activeSource = null;
+  }
+  const playBtn = $("play-btn");
+  if (playBtn) playBtn.classList.remove("is-playing");
+  stopPlayhead();
 }
 
 // ---------- Trigger compute via Shiny ----------
@@ -531,7 +540,12 @@ function initControls() {
       if (chart) compute();
     });
   const playBtn = $("play-btn");
-  if (playBtn) playBtn.addEventListener("click", playMelody);
+  if (playBtn) {
+    playBtn.addEventListener("click", () => {
+      if (playBtn.classList.contains("is-playing")) stopMelody();
+      else playMelody();
+    });
+  }
 }
 
 // ---------- Shiny message handlers ----------

@@ -306,24 +306,10 @@ function buildChart(spline, evalPoint) {
     });
   }
 
-  // Playhead datasets: vertical line + soft halo where it crosses the curve.
-  // Hidden until playback starts. Updated each rAF tick during playMelody().
+  // Playhead datasets: just the soft halo + bright dot where it crosses the
+  // curve. The vertical line is drawn separately via a Chart.js plugin
+  // (canvas overlay) so it doesn't affect y-axis auto-scaling.
   const PLAYHEAD = "#f472b6"; // pink so it stands out from accent indigo and eval green
-  datasets.push({
-    label: "__playhead_line",
-    data: [],
-    type: "line",
-    borderColor: PLAYHEAD,
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderDash: [5, 4],
-    pointRadius: 0,
-    showLine: true,
-    fill: false,
-    tension: 0,
-    hidden: true,
-  });
-  // Halo (large translucent pink) renders first
   datasets.push({
     label: "__playhead_halo",
     data: [],
@@ -335,7 +321,6 @@ function buildChart(spline, evalPoint) {
     showLine: false,
     hidden: true,
   });
-  // Inner bright dot on top of the halo
   datasets.push({
     label: "__playhead_glow",
     data: [],
@@ -416,9 +401,32 @@ function buildChart(spline, evalPoint) {
     chart.options = cfg.options;
     chart.update();
   } else {
+    cfg.plugins = [playheadLinePlugin];
     chart = new Chart($("spline-chart"), cfg);
   }
 }
+
+// Plugin that draws the vertical playhead line via canvas (so it doesn't
+// add any data points and won't affect Chart.js axis auto-scaling).
+const playheadLinePlugin = {
+  id: "playheadLine",
+  afterDatasetsDraw(c) {
+    if (playheadX === null) return;
+    const xPx = c.scales.x.getPixelForValue(playheadX);
+    const { top, bottom } = c.chartArea;
+    const ctx = c.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = "#f472b6";
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(xPx, top);
+    ctx.lineTo(xPx, bottom);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+let playheadX = null;
 
 // ---------- Steps rendering (LaTeX) ----------
 function renderSteps(spline) {
@@ -775,19 +783,17 @@ function playMelody() {
   }
 }
 
-// ---------- Playhead animation (vertical line + glowing curve point) ----------
+// ---------- Playhead animation (vertical line via plugin + glowing curve point) ----------
 let playheadFrame = null;
 
 function findPlayheadDatasets() {
   if (!chart) return null;
-  const ds = chart.data.datasets;
-  const out = { line: null, halo: null, glow: null };
-  for (const d of ds) {
-    if (d.label === "__playhead_line") out.line = d;
-    else if (d.label === "__playhead_halo") out.halo = d;
+  const out = { halo: null, glow: null };
+  for (const d of chart.data.datasets) {
+    if (d.label === "__playhead_halo") out.halo = d;
     else if (d.label === "__playhead_glow") out.glow = d;
   }
-  return out.line && out.halo && out.glow ? out : null;
+  return out.halo && out.glow ? out : null;
 }
 
 function startPlayhead(spline, durSec) {
@@ -798,26 +804,7 @@ function startPlayhead(spline, durSec) {
   const xs = spline.xs;
   const x0 = xs[0],
     xn = xs[xs.length - 1];
-  // Compute y-extent for the vertical line endpoints
-  let yMin = Infinity,
-    yMax = -Infinity;
-  for (const x of xs) {
-    const y = evalSpline(spline, x);
-    if (y < yMin) yMin = y;
-    if (y > yMax) yMax = y;
-  }
-  // Sample a few mid-curve points so the line spans the visible y range
-  for (let k = 1; k < 20; k++) {
-    const xi = x0 + ((xn - x0) * k) / 20;
-    const yi = evalSpline(spline, xi);
-    if (yi < yMin) yMin = yi;
-    if (yi > yMax) yMax = yi;
-  }
-  const yPad = (yMax - yMin) * 0.08 || 0.5;
-  const yLo = yMin - yPad;
-  const yHi = yMax + yPad;
 
-  sets.line.hidden = false;
   sets.halo.hidden = false;
   sets.glow.hidden = false;
 
@@ -833,13 +820,10 @@ function startPlayhead(spline, durSec) {
     const frac = t / durSec;
     const x = x0 + (xn - x0) * frac;
     const y = evalSpline(spline, x);
-    sets.line.data = [
-      { x, y: yLo },
-      { x, y: yHi },
-    ];
+    playheadX = x;
     sets.halo.data = [{ x, y }];
     sets.glow.data = [{ x, y }];
-    chart.update("none"); // skip Chart.js's animation; rAF drives the motion
+    chart.update("none"); // skip Chart.js's own animation; rAF drives motion
     playheadFrame = requestAnimationFrame(tick);
   }
   playheadFrame = requestAnimationFrame(tick);
@@ -850,21 +834,37 @@ function stopPlayhead() {
     cancelAnimationFrame(playheadFrame);
     playheadFrame = null;
   }
+  playheadX = null;
   if (!chart) return;
   const sets = findPlayheadDatasets();
   if (!sets) return;
-  sets.line.data = [];
   sets.halo.data = [];
   sets.glow.data = [];
-  sets.line.hidden = true;
   sets.halo.hidden = true;
   sets.glow.hidden = true;
   chart.update("none");
 }
 
+function stopMelody() {
+  if (activeSource) {
+    try {
+      activeSource.onended = null;
+      activeSource.stop();
+    } catch (_) {}
+    activeSource = null;
+  }
+  const playBtn = $("play-btn");
+  if (playBtn) playBtn.classList.remove("is-playing");
+  stopPlayhead();
+}
+
 (function wirePlay() {
   const btn = $("play-btn");
-  if (btn) btn.addEventListener("click", playMelody);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("is-playing")) stopMelody();
+    else playMelody();
+  });
 })();
 
 // ---------- Init ----------
