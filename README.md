@@ -1,4 +1,4 @@
-# Cubic Spline Interpolation — R Shiny App
+# Cubic Spline Interpolation (R Shiny App)
 
 An R Shiny application that computes and visualizes **natural** and
 **clamped cubic splines** through a user-supplied set of data points.
@@ -7,13 +7,13 @@ spline algorithm from _Numerical Analysis_ (Burden & Faires, §3.5).
 
 ## Features
 
-- **Two boundary conditions** — natural ($S''=0$ at endpoints) and clamped ($S'$ specified at endpoints).
-- **Editable data points** — paste/edit `x, y` pairs in the textarea, or pick a preset (Runge, sine, textbook example, daily temperature).
-- **Live plot** — smooth spline curve overlaid with input points (base R graphics).
-- **Step-by-step solution** — interval widths $h_i$, RHS $\alpha_i$, the Thomas-algorithm sweep ($l_i, \mu_i, z_i$), and back-substitution for $a_i, b_i, c_i, d_i$.
-- **Coefficient table** — `DT::datatable` view of every $S_i(x)$ coefficient.
-- **Piecewise expression view** — full piecewise definition of $S(x)$ via MathJax.
-- **Evaluate at arbitrary $x$** — value of $S(x)$ shown numerically and as a marker on the plot.
+- **Two boundary conditions:** natural ($S''=0$ at endpoints) and clamped ($S'$ specified at endpoints).
+- **Editable data points.** Paste or edit `x, y` pairs in the textarea, or pick a preset (Runge, sine, textbook example, daily temperature).
+- **Live plot.** Smooth spline curve overlaid with input points (base R graphics).
+- **Step-by-step solution.** Interval widths $h_i$, RHS $\alpha_i$, the Thomas-algorithm sweep ($l_i, \mu_i, z_i$), and back-substitution for $a_i, b_i, c_i, d_i$.
+- **Coefficient table.** `DT::datatable` view of every $S_i(x)$ coefficient.
+- **Piecewise expression view.** Full piecewise definition of $S(x)$ via MathJax.
+- **Evaluate at arbitrary $x$.** Value of $S(x)$ shown numerically and as a marker on the plot.
 
 ## Algorithm
 
@@ -84,7 +84,7 @@ fully self-contained and offline-capable after first load.
 
 ### Deploy to Vercel
 
-The `vercel.json` is already wired up — `outputDirectory` points at
+The `vercel.json` is already wired up; `outputDirectory` points at
 `dist/`, with COOP/COEP headers so shinylive's WebAssembly loader gets
 optimal performance.
 
@@ -135,7 +135,7 @@ rsconnect::deployApp("app")
 │   ├── spline_algo.js
 │   ├── run_js.js
 │   └── verify.py
-└── (legacy static port)   # original HTML/CSS/JS — not deployed
+└── (legacy static port)   # original HTML/CSS/JS, not deployed
     ├── index.html
     ├── style.css
     └── script.js

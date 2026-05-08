@@ -701,55 +701,9 @@ input[type="number"] {
   font-size: 0.85rem;
 }
 
-/* ================== Top action row (Compute + Play) ================== */
-.actions-row {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-  margin: 4px 0 10px;
-}
-.actions-row #calc-btn {
-  flex: 1;
-  width: auto;
-}
-.actions-row .icon-btn {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  width: 44px;
-  color: var(--accent);
-}
-.actions-row .icon-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  color: var(--text-muted);
-}
-.actions-row .icon-btn:not(:disabled):hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-.actions-row .icon-btn svg {
-  display: block;
-}
-.actions-row .icon-btn.is-playing {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-  animation: play-pulse 1s ease-in-out infinite;
-}
-@keyframes play-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(129, 140, 248, 0);
-  }
-}
+/* ================== Compute hint copy ================== */
 .actions-hint {
-  margin: 0 0 10px;
+  margin: 6px 0 10px;
   color: var(--text-muted);
   font-size: 0.78rem;
   line-height: 1.45;
@@ -757,6 +711,60 @@ input[type="number"] {
 .actions-hint strong {
   color: var(--text);
   font-weight: 600;
+}
+
+/* ================== Floating Play button on the plot ================== */
+.plot-play-btn {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 24, 27, 0.78);
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+.plot-play-btn:not(:disabled):hover {
+  background: rgba(39, 39, 42, 0.92);
+  border-color: var(--accent);
+}
+.plot-play-btn:not(:disabled):active {
+  transform: scale(0.95);
+}
+.plot-play-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+.plot-play-btn .play-glyph {
+  display: block;
+}
+.plot-play-btn.is-playing {
+  border-color: #f472b6;
+  color: #f472b6;
+  animation: plot-play-pulse 1.4s ease-in-out infinite;
+}
+@keyframes plot-play-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(244, 114, 182, 0);
+  }
 }
 
 /* ================== Buttons ================== */
@@ -1174,11 +1182,8 @@ mjx-container[display="true"] {
   p.lead {
     font-size: 0.98rem;
   }
-  .tabs {
-    margin-top: 18px;
-  }
+  /* (alignment-related .tabs / .tab rules consolidated above; only keep type tweak here) */
   .tab {
-    padding: 10px 14px;
     font-size: 0.88rem;
   }
   .subtab {

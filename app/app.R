@@ -83,7 +83,7 @@ intro_panel <- tags$section(
     tags$span(class = "eyebrow", "Method"),
     tags$h2("What is a Cubic Spline?"),
     tags$p(class = "lead", HTML(
-      "A <strong>cubic spline</strong> is a piecewise cubic polynomial that passes through a given set of data points and is <em>smooth</em> at every interior point — value, slope, and curvature all match across adjacent pieces."
+      "A <strong>cubic spline</strong> is a piecewise cubic polynomial that passes through a given set of data points and is <em>smooth</em> at every interior point: value, slope, and curvature all match across adjacent pieces."
     )),
     tags$p(HTML(
       "It avoids the wild oscillations of high-degree polynomial interpolation (<em>Runge's phenomenon</em>), making it the standard tool for smooth interpolation in graphics, engineering, and data science."
@@ -116,7 +116,7 @@ intro_panel <- tags$section(
       div(class = "app-card", tags$h4("Computer Graphics"),
           tags$p("Smooth curves for fonts, vector illustration, and animation paths.")),
       div(class = "app-card", tags$h4(HTML("Engineering &amp; CAD")),
-          tags$p("Designing aerodynamic shapes — wings, hulls, car bodies — from sparse points.")),
+          tags$p("Designing aerodynamic shapes (wings, hulls, car bodies) from sparse points.")),
       div(class = "app-card", tags$h4("Data Science"),
           tags$p("Smooth missing-value imputation, monotone calibration curves, and signal resampling."))
     ),
@@ -126,17 +126,17 @@ intro_panel <- tags$section(
       "through data without the explosive oscillations that plague high-degree polynomials.",
       "By insisting on <strong>low-degree pieces</strong> (cubic on each interval) joined under",
       "<strong>$C^2$ continuity</strong>, the method trades a single global formula for a system",
-      "that is both <em>visually faithful</em> and <em>numerically stable</em> &mdash; and the",
+      "that is both <em>visually faithful</em> and <em>numerically stable</em>, and the",
       "tridiagonal solve makes it cheap enough to run in real time on millions of points."
     )),
     tags$p(HTML(
-      "The wider implication is methodological. Many problems in numerical analysis &mdash; root-finding,",
-      "integration, ODE solving &mdash; share the same lesson: a globally-defined object often misbehaves,",
+      "The wider implication is methodological. Many problems in numerical analysis (root-finding,",
+      "integration, ODE solving) share the same lesson: a globally-defined object often misbehaves,",
       "while a <strong>piecewise-local construction with smoothness conditions</strong> stays well-conditioned.",
       "Cubic splines made this idea concrete in interpolation; the same pattern reappears in finite-element",
       "methods, signal processing kernels, and modern machine-learning techniques (e.g., natural cubic",
       "splines as regression smoothers, monotone splines for calibration). Learning splines, then, isn't",
-      "just learning interpolation &mdash; it's a first encounter with one of the most productive ideas",
+      "just learning interpolation. It's a first encounter with one of the most productive ideas",
       "in computational mathematics."
     )),
     div(class = "cta-row",
@@ -184,22 +184,16 @@ calc_panel <- tags$section(
           tags$button(class = "btn btn-ghost btn-sm", id = "reset-points-btn", type = "button", "Reset")
         )
       ),
-      div(class = "actions-row",
-        tags$button(class = "btn btn-primary", id = "calc-btn",
-                    type = "button", "Compute Spline"),
-        tags$button(class = "btn btn-ghost icon-btn", id = "play-btn",
-                    type = "button", disabled = NA, `aria-label` = "Play melody",
-          HTML('<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
-        )
-      ),
+      tags$button(class = "btn btn-primary btn-block", id = "calc-btn",
+                  type = "button", "Compute Spline"),
       tags$p(class = "actions-hint",
-        HTML("Click <strong>Play</strong> to hear the curve as a melody &mdash; height becomes pitch.")
+        HTML("Use <strong>Play</strong> on the plot to hear the curve as a melody, where height becomes pitch.")
       ),
       tags$p(class = "error-text", id = "error-text", role = "alert"),
       div(class = "field",
         tags$label(`for` = "preset", "Quick presets"),
         tags$select(id = "preset",
-          tags$option(value = "", HTML("&mdash; Choose a preset &mdash;")),
+          tags$option(value = "", HTML("Choose a preset&hellip;")),
           tags$option(value = "runge", HTML("Runge function (1/(1+25x&sup2;))")),
           tags$option(value = "sine", "Sine wave samples"),
           tags$option(value = "textbook", HTML("Textbook example (e&#739;)")),
@@ -226,7 +220,13 @@ calc_panel <- tags$section(
       ),
       div(id = "plot", class = "subpanel is-active", role = "tabpanel",
         div(class = "card",
-          div(class = "chart-wrap", tags$canvas(id = "spline-chart")),
+          div(class = "chart-wrap",
+            tags$canvas(id = "spline-chart"),
+            tags$button(class = "plot-play-btn", id = "play-btn",
+                        type = "button", disabled = NA, `aria-label` = "Play melody",
+              HTML('<svg class="play-glyph" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/></svg>')
+            )
+          ),
           tags$p(class = "caption", HTML(
             "The indigo curve is the cubic spline interpolant; white dots are the input data points. If you provided an evaluation $x$, the green marker shows $S(x)$ on the spline."
           ))
@@ -322,7 +322,7 @@ ui <- tagList(
 )
 
 # === HTML builders for Steps / Coefficients / Piecewise ===
-# Build as plain HTML strings — pushed to the client via custom messages
+# Build as plain HTML strings, pushed to the client via custom messages
 # (avoids Shiny's output-binding code path, which proved unreliable in shinylive).
 
 build_steps_html <- function(s) {

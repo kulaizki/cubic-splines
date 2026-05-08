@@ -1,5 +1,5 @@
 /* =============================================================
-   Cubic Spline Interpolation — pure JS
+   Cubic Spline Interpolation, pure JS
    Implements natural and clamped cubic splines via the
    tridiagonal (Thomas) algorithm following Burden & Faires.
    ============================================================= */
@@ -306,6 +306,49 @@ function buildChart(spline, evalPoint) {
     });
   }
 
+  // Playhead datasets: vertical line + soft halo where it crosses the curve.
+  // Hidden until playback starts. Updated each rAF tick during playMelody().
+  const PLAYHEAD = "#f472b6"; // pink so it stands out from accent indigo and eval green
+  datasets.push({
+    label: "__playhead_line",
+    data: [],
+    type: "line",
+    borderColor: PLAYHEAD,
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderDash: [5, 4],
+    pointRadius: 0,
+    showLine: true,
+    fill: false,
+    tension: 0,
+    hidden: true,
+  });
+  // Halo (large translucent pink) renders first
+  datasets.push({
+    label: "__playhead_halo",
+    data: [],
+    type: "scatter",
+    backgroundColor: "rgba(244,114,182,0.25)",
+    borderColor: "transparent",
+    pointRadius: 14,
+    pointHoverRadius: 14,
+    showLine: false,
+    hidden: true,
+  });
+  // Inner bright dot on top of the halo
+  datasets.push({
+    label: "__playhead_glow",
+    data: [],
+    type: "scatter",
+    backgroundColor: PLAYHEAD,
+    borderColor: "rgba(244,114,182,0.45)",
+    borderWidth: 4,
+    pointRadius: 4,
+    pointHoverRadius: 4,
+    showLine: false,
+    hidden: true,
+  });
+
   const cfg = {
     data: { datasets },
     options: {
@@ -321,6 +364,7 @@ function buildChart(spline, evalPoint) {
             padding: 14,
             usePointStyle: true,
             color: MUTED,
+            filter: (item) => !String(item.text || "").startsWith("__"),
           },
         },
         tooltip: {
@@ -330,6 +374,7 @@ function buildChart(spline, evalPoint) {
           titleColor: TEXT,
           bodyColor: TEXT,
           padding: 10,
+          filter: (ctx) => !String(ctx.dataset.label || "").startsWith("__"),
           callbacks: {
             label: (ctx) =>
               `(${fmt(ctx.parsed.x, 4)}, ${fmt(ctx.parsed.y, 4)})`,
@@ -661,7 +706,7 @@ function playMelody() {
     const N = 1024;
     const wavetable = new Float32Array(N);
     for (let i = 0; i < N; i++) {
-      // Mild harmonic mix — sine plus a touch of 2nd harmonic for warmth
+      // Mild harmonic mix: sine plus a touch of 2nd harmonic for warmth
       const t = (i / N) * 2 * Math.PI;
       wavetable[i] = 0.85 * Math.sin(t) + 0.15 * Math.sin(2 * t);
     }
@@ -716,9 +761,11 @@ function playMelody() {
     source.stop(t0 + dur + 0.05);
 
     if (playBtn) playBtn.classList.add("is-playing");
+    startPlayhead(lastSpline, dur);
     source.onended = () => {
       if (activeSource === source) activeSource = null;
       if (playBtn) playBtn.classList.remove("is-playing");
+      stopPlayhead();
     };
     activeSource = source;
   } catch (e) {
@@ -726,6 +773,93 @@ function playMelody() {
     if (playBtn) playBtn.classList.remove("is-playing");
     showError("Audio playback failed: " + e.message);
   }
+}
+
+// ---------- Playhead animation (vertical line + glowing curve point) ----------
+let playheadFrame = null;
+
+function findPlayheadDatasets() {
+  if (!chart) return null;
+  const ds = chart.data.datasets;
+  const out = { line: null, halo: null, glow: null };
+  for (const d of ds) {
+    if (d.label === "__playhead_line") out.line = d;
+    else if (d.label === "__playhead_halo") out.halo = d;
+    else if (d.label === "__playhead_glow") out.glow = d;
+  }
+  return out.line && out.halo && out.glow ? out : null;
+}
+
+function startPlayhead(spline, durSec) {
+  if (!chart) return;
+  const sets = findPlayheadDatasets();
+  if (!sets) return;
+
+  const xs = spline.xs;
+  const x0 = xs[0],
+    xn = xs[xs.length - 1];
+  // Compute y-extent for the vertical line endpoints
+  let yMin = Infinity,
+    yMax = -Infinity;
+  for (const x of xs) {
+    const y = evalSpline(spline, x);
+    if (y < yMin) yMin = y;
+    if (y > yMax) yMax = y;
+  }
+  // Sample a few mid-curve points so the line spans the visible y range
+  for (let k = 1; k < 20; k++) {
+    const xi = x0 + ((xn - x0) * k) / 20;
+    const yi = evalSpline(spline, xi);
+    if (yi < yMin) yMin = yi;
+    if (yi > yMax) yMax = yi;
+  }
+  const yPad = (yMax - yMin) * 0.08 || 0.5;
+  const yLo = yMin - yPad;
+  const yHi = yMax + yPad;
+
+  sets.line.hidden = false;
+  sets.halo.hidden = false;
+  sets.glow.hidden = false;
+
+  const startMs = performance.now();
+  if (playheadFrame) cancelAnimationFrame(playheadFrame);
+
+  function tick(now) {
+    const t = (now - startMs) / 1000;
+    if (t >= durSec) {
+      stopPlayhead();
+      return;
+    }
+    const frac = t / durSec;
+    const x = x0 + (xn - x0) * frac;
+    const y = evalSpline(spline, x);
+    sets.line.data = [
+      { x, y: yLo },
+      { x, y: yHi },
+    ];
+    sets.halo.data = [{ x, y }];
+    sets.glow.data = [{ x, y }];
+    chart.update("none"); // skip Chart.js's animation; rAF drives the motion
+    playheadFrame = requestAnimationFrame(tick);
+  }
+  playheadFrame = requestAnimationFrame(tick);
+}
+
+function stopPlayhead() {
+  if (playheadFrame) {
+    cancelAnimationFrame(playheadFrame);
+    playheadFrame = null;
+  }
+  if (!chart) return;
+  const sets = findPlayheadDatasets();
+  if (!sets) return;
+  sets.line.data = [];
+  sets.halo.data = [];
+  sets.glow.data = [];
+  sets.line.hidden = true;
+  sets.halo.hidden = true;
+  sets.glow.hidden = true;
+  chart.update("none");
 }
 
 (function wirePlay() {

@@ -1,5 +1,5 @@
 /* =============================================================
-   Cubic Spline Interpolation — Shiny client
+   Cubic Spline Interpolation, Shiny client
    Same UI as the static version. R does the math; this file
    handles DOM, tabs, points table, Chart.js, and Shiny I/O.
    ============================================================= */
@@ -166,6 +166,46 @@ function buildChart(spline, evalPoint) {
     });
   }
 
+  // Playhead datasets: vertical line + soft halo where it crosses the curve.
+  const PLAYHEAD = "#f472b6";
+  datasets.push({
+    label: "__playhead_line",
+    data: [],
+    type: "line",
+    borderColor: PLAYHEAD,
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderDash: [5, 4],
+    pointRadius: 0,
+    showLine: true,
+    fill: false,
+    tension: 0,
+    hidden: true,
+  });
+  datasets.push({
+    label: "__playhead_halo",
+    data: [],
+    type: "scatter",
+    backgroundColor: "rgba(244,114,182,0.25)",
+    borderColor: "transparent",
+    pointRadius: 14,
+    pointHoverRadius: 14,
+    showLine: false,
+    hidden: true,
+  });
+  datasets.push({
+    label: "__playhead_glow",
+    data: [],
+    type: "scatter",
+    backgroundColor: PLAYHEAD,
+    borderColor: "rgba(244,114,182,0.45)",
+    borderWidth: 4,
+    pointRadius: 4,
+    pointHoverRadius: 4,
+    showLine: false,
+    hidden: true,
+  });
+
   const cfg = {
     data: { datasets },
     options: {
@@ -181,6 +221,7 @@ function buildChart(spline, evalPoint) {
             padding: 14,
             usePointStyle: true,
             color: MUTED,
+            filter: (item) => !String(item.text || "").startsWith("__"),
           },
         },
         tooltip: {
@@ -190,6 +231,7 @@ function buildChart(spline, evalPoint) {
           titleColor: TEXT,
           bodyColor: TEXT,
           padding: 10,
+          filter: (ctx) => !String(ctx.dataset.label || "").startsWith("__"),
           callbacks: {
             label: (ctx) =>
               `(${fmt(ctx.parsed.x, 4)}, ${fmt(ctx.parsed.y, 4)})`,
@@ -308,9 +350,11 @@ function playMelody() {
     source.stop(t0 + dur + 0.05);
 
     if (playBtn) playBtn.classList.add("is-playing");
+    startPlayhead(lastCurve, dur);
     source.onended = () => {
       if (activeSource === source) activeSource = null;
       if (playBtn) playBtn.classList.remove("is-playing");
+      stopPlayhead();
     };
     activeSource = source;
   } catch (e) {
@@ -318,6 +362,101 @@ function playMelody() {
     if (playBtn) playBtn.classList.remove("is-playing");
     showError("Audio playback failed: " + e.message);
   }
+}
+
+// ---------- Playhead animation (vertical line + glowing curve point) ----------
+let playheadFrame = null;
+
+function evalCurveAt(curve, x) {
+  const n = curve.length;
+  if (n === 0) return 0;
+  if (x <= curve[0].x) return curve[0].y;
+  if (x >= curve[n - 1].x) return curve[n - 1].y;
+  let lo = 0,
+    hi = n - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (curve[mid].x <= x) lo = mid;
+    else hi = mid;
+  }
+  const a = curve[lo],
+    b = curve[hi];
+  const t = (x - a.x) / (b.x - a.x);
+  return a.y + t * (b.y - a.y);
+}
+
+function findPlayheadDatasets() {
+  if (!chart) return null;
+  const ds = chart.data.datasets;
+  const out = { line: null, halo: null, glow: null };
+  for (const d of ds) {
+    if (d.label === "__playhead_line") out.line = d;
+    else if (d.label === "__playhead_halo") out.halo = d;
+    else if (d.label === "__playhead_glow") out.glow = d;
+  }
+  return out.line && out.halo && out.glow ? out : null;
+}
+
+function startPlayhead(curve, durSec) {
+  if (!chart || !curve || curve.length === 0) return;
+  const sets = findPlayheadDatasets();
+  if (!sets) return;
+
+  const x0 = curve[0].x;
+  const xn = curve[curve.length - 1].x;
+  let yMin = Infinity,
+    yMax = -Infinity;
+  for (const p of curve) {
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  }
+  const yPad = (yMax - yMin) * 0.08 || 0.5;
+  const yLo = yMin - yPad;
+  const yHi = yMax + yPad;
+
+  sets.line.hidden = false;
+  sets.halo.hidden = false;
+  sets.glow.hidden = false;
+
+  const startMs = performance.now();
+  if (playheadFrame) cancelAnimationFrame(playheadFrame);
+
+  function tick(now) {
+    const t = (now - startMs) / 1000;
+    if (t >= durSec) {
+      stopPlayhead();
+      return;
+    }
+    const frac = t / durSec;
+    const x = x0 + (xn - x0) * frac;
+    const y = evalCurveAt(curve, x);
+    sets.line.data = [
+      { x, y: yLo },
+      { x, y: yHi },
+    ];
+    sets.halo.data = [{ x, y }];
+    sets.glow.data = [{ x, y }];
+    chart.update("none");
+    playheadFrame = requestAnimationFrame(tick);
+  }
+  playheadFrame = requestAnimationFrame(tick);
+}
+
+function stopPlayhead() {
+  if (playheadFrame) {
+    cancelAnimationFrame(playheadFrame);
+    playheadFrame = null;
+  }
+  if (!chart) return;
+  const sets = findPlayheadDatasets();
+  if (!sets) return;
+  sets.line.data = [];
+  sets.halo.data = [];
+  sets.glow.data = [];
+  sets.line.hidden = true;
+  sets.halo.hidden = true;
+  sets.glow.hidden = true;
+  chart.update("none");
 }
 
 // ---------- Trigger compute via Shiny ----------
@@ -433,7 +572,7 @@ function initShinyHandlers() {
     setHtmlAndTypeset("predict-output", p.html);
   });
 
-  // Initial compute — multi-path trigger so it fires regardless of when
+  // Initial compute: multi-path trigger so it fires regardless of when
   // Shiny's session events land relative to this script.
   let initialComputeDone = false;
   function triggerInitialCompute() {
@@ -452,7 +591,7 @@ function initShinyHandlers() {
   document.addEventListener("shiny:connected", triggerInitialCompute);
   document.addEventListener("shiny:sessioninitialized", triggerInitialCompute);
   document.addEventListener("shiny:idle", triggerInitialCompute);
-  // Fallback poll — in case all three events landed before our listeners.
+  // Fallback poll, in case all three events landed before our listeners.
   let pollTries = 0;
   const pollId = setInterval(function () {
     pollTries++;

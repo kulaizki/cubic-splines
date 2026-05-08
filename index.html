@@ -55,7 +55,7 @@
         <h2>What is a Cubic Spline?</h2>
         <p class="lead">
           A <strong>cubic spline</strong> is a piecewise cubic polynomial that passes through a given
-          set of data points and is <em>smooth</em> at every interior point — value, slope, and
+          set of data points and is <em>smooth</em> at every interior point: value, slope, and
           curvature all match across adjacent pieces.
         </p>
         <p>
@@ -101,7 +101,7 @@
           </div>
           <div class="app-card">
             <h4>Engineering &amp; CAD</h4>
-            <p>Designing aerodynamic shapes — wings, hulls, car bodies — from sparse points.</p>
+            <p>Designing aerodynamic shapes (wings, hulls, car bodies) from sparse points.</p>
           </div>
           <div class="app-card">
             <h4>Data Science</h4>
@@ -115,17 +115,17 @@
           data without the explosive oscillations that plague high-degree polynomials. By insisting on
           <strong>low-degree pieces</strong> (cubic on each interval) joined under <strong>$C^2$ continuity</strong>,
           the method trades a single global formula for a system that is both <em>visually faithful</em> and
-          <em>numerically stable</em> — and the tridiagonal solve makes it cheap enough to run in real time
+          <em>numerically stable</em>, and the tridiagonal solve makes it cheap enough to run in real time
           on millions of points.
         </p>
         <p>
-          The wider implication is methodological. Many problems in numerical analysis — root-finding,
-          integration, ODE solving — share the same lesson: a globally-defined object often misbehaves,
+          The wider implication is methodological. Many problems in numerical analysis (root-finding,
+          integration, ODE solving) share the same lesson: a globally-defined object often misbehaves,
           while a <strong>piecewise-local construction with smoothness conditions</strong> stays well-conditioned.
           Cubic splines made this idea concrete in interpolation; the same pattern reappears in finite-element
           methods, signal processing kernels, and modern machine-learning techniques (e.g., natural cubic
           splines as regression smoothers, monotone splines for calibration). Learning splines, then, isn't
-          just learning interpolation — it's a first encounter with one of the most productive ideas in
+          just learning interpolation. It's a first encounter with one of the most productive ideas in
           computational mathematics.
         </p>
 
@@ -176,23 +176,16 @@
             </div>
           </div>
 
-          <div class="actions-row">
-            <button class="btn btn-primary" id="calc-btn" type="button">Compute Spline</button>
-            <button class="btn btn-ghost icon-btn" id="play-btn" type="button" disabled aria-label="Play melody">
-              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                <path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
+          <button class="btn btn-primary btn-block" id="calc-btn" type="button">Compute Spline</button>
           <p class="actions-hint">
-            Click <strong>Play</strong> to hear the curve as a melody — height becomes pitch.
+            Use <strong>Play</strong> on the plot to hear the curve as a melody, where height becomes pitch.
           </p>
           <p class="error-text" id="error-text" role="alert"></p>
 
           <div class="field">
             <label for="preset">Quick presets</label>
             <select id="preset">
-              <option value="">— Choose a preset —</option>
+              <option value="">Choose a preset…</option>
               <option value="runge">Runge function (1/(1+25x²))</option>
               <option value="sine">Sine wave samples</option>
               <option value="textbook">Textbook example (eˣ)</option>
@@ -220,6 +213,11 @@
             <div class="card">
               <div class="chart-wrap">
                 <canvas id="spline-chart"></canvas>
+                <button class="plot-play-btn" id="play-btn" type="button" disabled aria-label="Play melody">
+                  <svg class="play-glyph" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true">
+                    <path d="M13 2v8.2a2.4 2.4 0 1 1-1.2-2.05V4.2L7 5.4v6.4a2.4 2.4 0 1 1-1.2-2.05V3.4L13 2z" fill="currentColor"/>
+                  </svg>
+                </button>
               </div>
               <p class="caption">
                 The indigo curve is the cubic spline interpolant; white dots are the input data points.
