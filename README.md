@@ -33,18 +33,24 @@ install.packages("shiny")
 
 Once R is installed, three equivalent ways to run:
 
-**1. One-command script** (auto-installs `shiny` and launches the app):
+**1. Double-click (no terminal needed):**
 
-```bash
-./run.sh          # macOS / Linux
-run.bat           # Windows (or just double-click)
-```
+- **macOS:** double-click `run.command`
+- **Windows:** double-click `run.bat`
+
+Both scripts auto-install the `shiny` package if needed, then launch the app
+in your browser.
+
+> First-time only on macOS: right-click `run.command` → **Open** to bypass
+> Gatekeeper's "unidentified developer" warning. Subsequent double-clicks
+> just work.
 
 **2. RStudio:** open `FinalActivity_deJesusLimPumarManaliliSingh.R` → click **Run App**.
 
 **3. Terminal:**
 
 ```bash
+./run.sh                                                                              # macOS / Linux
 Rscript -e 'shiny::runApp("FinalActivity_deJesusLimPumarManaliliSingh.R", launch.browser=TRUE)'
 ```
 
